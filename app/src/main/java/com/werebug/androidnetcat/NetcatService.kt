@@ -26,25 +26,27 @@ class NetcatService : Service() {
         }
     }
 
-    fun beginNetcatConnection(nCmd: String, tView: TextView) {
-        Log.d(LogTag, "Started with: " + nCmd)
-        val params: List<String> = nCmd.split(" ")
-        val host: String = params[1]
-        val port: Int = params[2].toInt()
-
-        val worker = NetcatWorker(host, port, tView, sendQueue)
-        worker.start()
-    }
-
     fun send(text: String) {
         sendQueue.add(text)
     }
 
-    fun beginNetcatListener(nCmd: String, tView: TextView) {
-        val params: List<String> = nCmd.split(" ")
-        val port: Int = params[2].toInt()
+    fun beginTCPConnection(host: String, port: Int, tView: TextView) {
+        val worker = NetcatWorker(host, port, AndroidNetcatHome.Proto.TCP, tView, sendQueue)
+        worker.start()
+    }
 
-        val worker = NetcatWorker(null, port, tView, sendQueue)
+    fun beginTCPListener(port: Int, tView: TextView) {
+        val worker = NetcatWorker(null, port, AndroidNetcatHome.Proto.TCP, tView, sendQueue)
+        worker.start()
+    }
+
+    fun beginUDPConnection(host: String, port: Int, tView: TextView) {
+        val worker = NetcatWorker(host, port, AndroidNetcatHome.Proto.UDP, tView, sendQueue)
+        worker.start()
+    }
+
+    fun beginUDPListener(port: Int, tView: TextView) {
+        val worker = NetcatWorker(null, port, AndroidNetcatHome.Proto.UDP, tView, sendQueue)
         worker.start()
     }
 }

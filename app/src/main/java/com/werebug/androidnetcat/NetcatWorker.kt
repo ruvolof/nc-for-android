@@ -4,22 +4,20 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.TextView
-import java.io.BufferedInputStream
-import java.io.BufferedReader
 import java.io.IOException
-import java.io.InputStreamReader
 import java.net.InetSocketAddress
-import java.net.ServerSocket
-import java.net.Socket
+import java.net.SocketAddress
 import java.nio.ByteBuffer
+import java.nio.channels.DatagramChannel
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
 import java.util.*
 
-class NetcatWorker(host: String?, port: Int, tView: TextView, sendQueue: LinkedList<String>) : Thread() {
+class NetcatWorker(host: String?, port: Int, proto: AndroidNetcatHome.Proto, tView: TextView, sendQueue: LinkedList<String>) : Thread() {
 
     val host = host
     val port = port
+    val proto = proto
     val tView = tView
     val sendQueue = sendQueue
 
@@ -38,15 +36,21 @@ class NetcatWorker(host: String?, port: Int, tView: TextView, sendQueue: LinkedL
     }
 
     override fun run() {
-        if (host != null) {
-            openTcpConnection()
+        if (host != null && proto == AndroidNetcatHome.Proto.TCP) {
+            openTCPConnection()
         }
-        else {
-            startTcpListener()
+        else if (host == null && proto == AndroidNetcatHome.Proto.TCP) {
+            startTCPListener()
+        }
+        else if (host != null && proto == AndroidNetcatHome.Proto.UDP) {
+            openUDPConnection()
+        }
+        else if (host == null && proto == AndroidNetcatHome.Proto.UDP) {
+            startUDPListener()
         }
     }
 
-    fun openTcpConnection() {
+    private fun openTCPConnection() {
         try {
             val c_socket: SocketChannel = SocketChannel.open()
             c_socket.configureBlocking(false)
@@ -75,7 +79,7 @@ class NetcatWorker(host: String?, port: Int, tView: TextView, sendQueue: LinkedL
         }
     }
 
-    fun startTcpListener() {
+    private fun startTCPListener() {
         try {
             val s_socket: ServerSocketChannel = ServerSocketChannel.open()
             s_socket.socket().bind(InetSocketAddress(port))
@@ -104,7 +108,82 @@ class NetcatWorker(host: String?, port: Int, tView: TextView, sendQueue: LinkedL
         }
     }
 
-    fun sendMessages(c_socket: SocketChannel) {
+    private fun openUDPConnection() {
+        try {
+            val d_socket: DatagramChannel = DatagramChannel.open()
+            d_socket.configureBlocking(false)
+
+            d_socket.connect(InetSocketAddress(host,port))
+
+            val buffer: ByteBuffer = ByteBuffer.allocate(65535)
+            while (true) {
+                // Checking queue for messages to send
+                sendDatagram(d_socket)
+
+                // Continuosly reading from socket
+                readDatagram(d_socket, buffer)
+                buffer.clear()
+            }
+        }
+        catch (e: IOException) {
+            handlerIOException(e)
+        }
+    }
+
+    private fun startUDPListener() {
+        try {
+            val d_socket : DatagramChannel = DatagramChannel.open()
+            d_socket.socket().bind(InetSocketAddress(port))
+
+            val buffer: ByteBuffer = ByteBuffer.allocate(65535)
+
+            val clientAddress : SocketAddress = d_socket.receive(buffer)
+
+            val received_datagram: String = "Received datagram from " + clientAddress.toString() + "\n"
+            updateUIHandler.post(updateTextView(received_datagram, tView))
+
+            val buffer_arr = buffer.array()
+            val buffer_str = String(buffer_arr.slice(IntRange(0, buffer.position())).toByteArray())
+            updateUIHandler.post(updateTextView(buffer_str, tView))
+
+            d_socket.connect(clientAddress)
+            d_socket.configureBlocking(false)
+
+            while (true) {
+                // Checking queue for messages to send
+                sendDatagram(d_socket)
+
+                // Continuosly reading from socket
+                readDatagram(d_socket, buffer)
+                buffer.clear()
+            }
+        }
+        catch (e: IOException) {
+            handlerIOException(e)
+        }
+    }
+
+    private fun readDatagram(dSocket: DatagramChannel, buffer: ByteBuffer) {
+        val intRead: Int = dSocket.read(buffer)
+        if (intRead > 0) {
+            val buffer_arr = buffer.array()
+            val buffer_str = String(buffer_arr.slice(IntRange(0, intRead - 1)).toByteArray())
+            updateUIHandler.post(updateTextView(buffer_str, tView))
+        }
+    }
+
+    private fun sendDatagram(dSocket: DatagramChannel) {
+        while (!sendQueue.isEmpty()) {
+            val msg: String = sendQueue.pop() + "\n"
+            val sendBuf : ByteBuffer = ByteBuffer.wrap(msg.toByteArray())
+            while (sendBuf.hasRemaining()) {
+                dSocket.write(sendBuf)
+            }
+            updateUIHandler.post(updateTextView(msg, tView))
+        }
+    }
+
+    private fun sendMessages(c_socket: SocketChannel) {
         while (!sendQueue.isEmpty()) {
             val msg: String = sendQueue.pop() + "\n"
             val sendBuf : ByteBuffer = ByteBuffer.wrap(msg.toByteArray())
@@ -115,7 +194,7 @@ class NetcatWorker(host: String?, port: Int, tView: TextView, sendQueue: LinkedL
         }
     }
 
-    fun readMessages(c_socket: SocketChannel, buffer: ByteBuffer) {
+    private fun readMessages(c_socket: SocketChannel, buffer: ByteBuffer) {
         val intRead: Int = c_socket.read(buffer)
         if (intRead > 0) {
             val buffer_arr = buffer.array()
@@ -124,7 +203,7 @@ class NetcatWorker(host: String?, port: Int, tView: TextView, sendQueue: LinkedL
         }
     }
 
-    fun handlerIOException(e: IOException) {
+    private fun handlerIOException(e: IOException) {
         Log.d(LogTag, e.message)
         val error: String? = e.message
         if (error != null) {

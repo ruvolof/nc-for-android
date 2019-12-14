@@ -1,6 +1,9 @@
 <resources>
-    <string name="app_name">Android Netcat</string>
+    <string name="app_name">nc</string>
     <string name="nc_input_hint">nc 127.0.0.1 9999</string>
     <string name="nc_wrong_syntax">Wrong syntax. See examples.</string>
     <string name="ed_type_your_message">Message</string>
+    <string name="wrong_port_range">Allowed ports: 1–65535</string>
+
+    <string name="main_help_text">nc for Android\nCreated by Werebug (https://werebug.com)\n\nOPTIONS:\n-l bind socket\n-p PORT set port\n-u use UDP protocol\n\nEXAMPLES:\nnc 127.0.0.1 9999\nnc -lp 9999\nnc -u 127.0.0.1 9999\nnc -ulp 9999</string>
 </resources>
