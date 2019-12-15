@@ -2,7 +2,6 @@ package com.werebug.androidnetcat
 
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.widget.TextView
 import java.io.IOException
 import java.net.InetSocketAddress
@@ -204,7 +203,6 @@ class NetcatWorker(host: String?, port: Int, proto: AndroidNetcatHome.Proto, tVi
     }
 
     private fun handlerIOException(e: IOException) {
-        Log.d(LogTag, e.message)
         val error: String? = e.message
         if (error != null) {
             updateUIHandler.post(updateTextView(error + "\n", tView))

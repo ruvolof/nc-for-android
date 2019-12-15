@@ -3,7 +3,6 @@ package com.werebug.androidnetcat
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
@@ -15,11 +14,13 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
 
     companion object {
         val netcat_cmd_extra: String = "NETCAT_CMD"
+        val netcat_cmd_string: String = "NETCAT_CMD_STRING"
     }
 
     private val LogTag: String = "AndroidNetcatHome"
     private lateinit var btn_start_netcat: ImageButton
     private lateinit var nc_command_line_edittext: EditText
+    private var nc_cmd_text: String? = null
 
     enum class Proto {
         TCP,
@@ -44,9 +45,11 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
     }
 
     override fun onClick(v: View?) {
-        val nc_cmd_text: String = nc_command_line_edittext.text.toString()
         when (v?.id) {
-            R.id.btn_start_netcat -> check_command_syntax(nc_cmd_text)
+            R.id.btn_start_netcat -> {
+                nc_cmd_text = nc_command_line_edittext.text.toString();
+                check_command_syntax(nc_cmd_text as String);
+            }
         }
     }
 
@@ -109,6 +112,7 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
     private fun start_netcat_session_activity(sargs: sessionArgs) {
         val launch_netcat_session = Intent(this, NetcatSession::class.java)
         launch_netcat_session.putExtra(netcat_cmd_extra, sargs)
+        launch_netcat_session.putExtra(netcat_cmd_string, nc_cmd_text)
         startActivity(launch_netcat_session)
     }
 }

@@ -17,6 +17,7 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
     private val LogTag: String = "NetcatSessionActivity"
 
     private lateinit var netcat_session_args: AndroidNetcatHome.sessionArgs
+    private lateinit var netcat_cmd_text: String
     private lateinit var tv_netcat_connection: TextView
     private lateinit var et_nc_send_text: EditText
     private lateinit var btn_send: ImageButton
@@ -29,6 +30,9 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         setContentView(R.layout.activity_netcat_session)
 
         netcat_session_args = intent.getSerializableExtra(AndroidNetcatHome.netcat_cmd_extra) as AndroidNetcatHome.sessionArgs
+        netcat_cmd_text = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string)
+
+        setTitle(netcat_cmd_text)
 
         tv_netcat_connection = findViewById(R.id.tv_connection)
         et_nc_send_text = findViewById(R.id.et_nc_send_text)
