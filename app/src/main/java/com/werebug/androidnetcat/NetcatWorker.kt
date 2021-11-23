@@ -12,152 +12,142 @@ import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
 import java.util.*
 
-class NetcatWorker(host: String?, port: Int, proto: AndroidNetcatHome.Proto, tView: TextView, sendQueue: LinkedList<String>) : Thread() {
-
-    val host = host
-    val port = port
-    val proto = proto
-    val tView = tView
-    val sendQueue = sendQueue
+class NetcatWorker(
+    private val host: String?,
+    private val port: Int,
+    private val proto: AndroidNetcatHome.Proto,
+    private val tView: TextView,
+    private val sendQueue: LinkedList<String>
+) : Thread() {
 
     var updateUIHandler: Handler = Handler(Looper.getMainLooper())
 
-    private val LogTag : String = "NetcatWorker"
-
-    class updateTextView(t: String, v: TextView) : Runnable {
-        val t = t
-        val v = v
-
+    class UpdateTextView(private val t: String, private val v: TextView) : Runnable {
         override fun run() {
             val nText: String = v.text.toString() + t
-            v.setText(nText)
+            v.text = nText
         }
     }
 
     override fun run() {
         if (host != null && proto == AndroidNetcatHome.Proto.TCP) {
             openTCPConnection()
-        }
-        else if (host == null && proto == AndroidNetcatHome.Proto.TCP) {
+        } else if (host == null && proto == AndroidNetcatHome.Proto.TCP) {
             startTCPListener()
-        }
-        else if (host != null && proto == AndroidNetcatHome.Proto.UDP) {
+        } else if (host != null && proto == AndroidNetcatHome.Proto.UDP) {
             openUDPConnection()
-        }
-        else if (host == null && proto == AndroidNetcatHome.Proto.UDP) {
+        } else if (host == null && proto == AndroidNetcatHome.Proto.UDP) {
             startUDPListener()
         }
     }
 
     private fun openTCPConnection() {
         try {
-            val c_socket: SocketChannel = SocketChannel.open()
-            c_socket.configureBlocking(false)
+            val cSocket: SocketChannel = SocketChannel.open()
+            cSocket.configureBlocking(false)
 
-            c_socket.connect(InetSocketAddress(host, port))
+            cSocket.connect(InetSocketAddress(host, port))
 
-            while (!c_socket.finishConnect()) {
+            while (!cSocket.finishConnect()) {
                 sleep(200)
             }
 
-            val connectionSuccessful: String = host + " " + port + " open\n"
-            updateUIHandler.post(updateTextView(connectionSuccessful, tView))
+            val connectionSuccessful = "$host $port open\n"
+            updateUIHandler.post(UpdateTextView(connectionSuccessful, tView))
 
             val buffer: ByteBuffer = ByteBuffer.allocate(1024)
             while (true) {
                 // Checking queue for messages to send
-                sendMessages(c_socket)
+                sendMessages(cSocket)
 
-                // Continuosly reading from socket
-                readMessages(c_socket, buffer)
+                // Continuously reading from socket
+                readMessages(cSocket, buffer)
                 buffer.clear()
             }
-        }
-        catch (e : IOException) {
+        } catch (e: IOException) {
             handlerIOException(e)
         }
     }
 
     private fun startTCPListener() {
         try {
-            val s_socket: ServerSocketChannel = ServerSocketChannel.open()
-            s_socket.socket().bind(InetSocketAddress(port))
+            val sSocket: ServerSocketChannel = ServerSocketChannel.open()
+            sSocket.socket().bind(InetSocketAddress(port))
 
-            val listening_success: String = "Listening on " + s_socket.socket().localSocketAddress + "\n"
-            updateUIHandler.post(updateTextView(listening_success, tView))
+            val listeningSuccess: String =
+                "Listening on " + sSocket.socket().localSocketAddress + "\n"
+            updateUIHandler.post(UpdateTextView(listeningSuccess, tView))
 
-            val c_socket : SocketChannel = s_socket.accept()
-            c_socket.configureBlocking(false)
+            val cSocket: SocketChannel = sSocket.accept()
+            cSocket.configureBlocking(false)
 
-            val connection_received: String = "Received connection from " + c_socket.socket().remoteSocketAddress.toString() + "\n"
-            updateUIHandler.post(updateTextView(connection_received, tView))
+            val connectionReceived: String =
+                "Received connection from " + cSocket.socket().remoteSocketAddress.toString() + "\n"
+            updateUIHandler.post(UpdateTextView(connectionReceived, tView))
 
             val buffer: ByteBuffer = ByteBuffer.allocate(1024)
             while (true) {
                 // Checking queue for messages to send
-                sendMessages(c_socket)
+                sendMessages(cSocket)
 
-                // Continuosly reading from socket
-                readMessages(c_socket, buffer)
+                // Continuously reading from socket
+                readMessages(cSocket, buffer)
                 buffer.clear()
             }
-        }
-        catch (e: IOException) {
+        } catch (e: IOException) {
             handlerIOException(e)
         }
     }
 
     private fun openUDPConnection() {
         try {
-            val d_socket: DatagramChannel = DatagramChannel.open()
-            d_socket.configureBlocking(false)
+            val dSocket: DatagramChannel = DatagramChannel.open()
+            dSocket.configureBlocking(false)
 
-            d_socket.connect(InetSocketAddress(host,port))
+            dSocket.connect(InetSocketAddress(host, port))
 
             val buffer: ByteBuffer = ByteBuffer.allocate(65535)
             while (true) {
                 // Checking queue for messages to send
-                sendDatagram(d_socket)
+                sendDatagram(dSocket)
 
-                // Continuosly reading from socket
-                readDatagram(d_socket, buffer)
+                // Continuously reading from socket
+                readDatagram(dSocket, buffer)
                 buffer.clear()
             }
-        }
-        catch (e: IOException) {
+        } catch (e: IOException) {
             handlerIOException(e)
         }
     }
 
     private fun startUDPListener() {
         try {
-            val d_socket : DatagramChannel = DatagramChannel.open()
-            d_socket.socket().bind(InetSocketAddress(port))
+            val dSocket: DatagramChannel = DatagramChannel.open()
+            dSocket.socket().bind(InetSocketAddress(port))
 
             val buffer: ByteBuffer = ByteBuffer.allocate(65535)
 
-            val clientAddress : SocketAddress = d_socket.receive(buffer)
+            val clientAddress: SocketAddress = dSocket.receive(buffer)
 
-            val received_datagram: String = "Received datagram from " + clientAddress.toString() + "\n"
-            updateUIHandler.post(updateTextView(received_datagram, tView))
+            val receivedDatagram = "Received datagram from $clientAddress\n"
+            updateUIHandler.post(UpdateTextView(receivedDatagram, tView))
 
-            val buffer_arr = buffer.array()
-            val buffer_str = String(buffer_arr.slice(IntRange(0, buffer.position())).toByteArray())
-            updateUIHandler.post(updateTextView(buffer_str, tView))
+            val bufferArr = buffer.array()
+            val bufferStr = String(bufferArr.slice(IntRange(0, buffer.position())).toByteArray())
+            updateUIHandler.post(UpdateTextView(bufferStr, tView))
 
-            d_socket.connect(clientAddress)
-            d_socket.configureBlocking(false)
+            dSocket.connect(clientAddress)
+            dSocket.configureBlocking(false)
 
             while (true) {
                 // Checking queue for messages to send
-                sendDatagram(d_socket)
+                sendDatagram(dSocket)
 
-                // Continuosly reading from socket
-                readDatagram(d_socket, buffer)
+                // Continuously reading from socket
+                readDatagram(dSocket, buffer)
                 buffer.clear()
             }
-        }
-        catch (e: IOException) {
+        } catch (e: IOException) {
             handlerIOException(e)
         }
     }
@@ -165,47 +155,47 @@ class NetcatWorker(host: String?, port: Int, proto: AndroidNetcatHome.Proto, tVi
     private fun readDatagram(dSocket: DatagramChannel, buffer: ByteBuffer) {
         val intRead: Int = dSocket.read(buffer)
         if (intRead > 0) {
-            val buffer_arr = buffer.array()
-            val buffer_str = String(buffer_arr.slice(IntRange(0, intRead - 1)).toByteArray())
-            updateUIHandler.post(updateTextView(buffer_str, tView))
+            val bufferArr = buffer.array()
+            val bufferStr = String(bufferArr.slice(IntRange(0, intRead - 1)).toByteArray())
+            updateUIHandler.post(UpdateTextView(bufferStr, tView))
         }
     }
 
     private fun sendDatagram(dSocket: DatagramChannel) {
         while (!sendQueue.isEmpty()) {
             val msg: String = sendQueue.pop() + "\n"
-            val sendBuf : ByteBuffer = ByteBuffer.wrap(msg.toByteArray())
+            val sendBuf = ByteBuffer.wrap(msg.toByteArray())
             while (sendBuf.hasRemaining()) {
                 dSocket.write(sendBuf)
             }
-            updateUIHandler.post(updateTextView(msg, tView))
+            updateUIHandler.post(UpdateTextView(msg, tView))
         }
     }
 
     private fun sendMessages(c_socket: SocketChannel) {
         while (!sendQueue.isEmpty()) {
             val msg: String = sendQueue.pop() + "\n"
-            val sendBuf : ByteBuffer = ByteBuffer.wrap(msg.toByteArray())
+            val sendBuf = ByteBuffer.wrap(msg.toByteArray())
             while (sendBuf.hasRemaining()) {
                 c_socket.write(sendBuf)
             }
-            updateUIHandler.post(updateTextView(msg, tView))
+            updateUIHandler.post(UpdateTextView(msg, tView))
         }
     }
 
     private fun readMessages(c_socket: SocketChannel, buffer: ByteBuffer) {
         val intRead: Int = c_socket.read(buffer)
         if (intRead > 0) {
-            val buffer_arr = buffer.array()
-            val buffer_str = String(buffer_arr.slice(IntRange(0, intRead - 1)).toByteArray())
-            updateUIHandler.post(updateTextView(buffer_str, tView))
+            val bufferArr = buffer.array()
+            val bufferStr = String(bufferArr.slice(IntRange(0, intRead - 1)).toByteArray())
+            updateUIHandler.post(UpdateTextView(bufferStr, tView))
         }
     }
 
     private fun handlerIOException(e: IOException) {
         val error: String? = e.message
         if (error != null) {
-            updateUIHandler.post(updateTextView(error + "\n", tView))
+            updateUIHandler.post(UpdateTextView(error + "\n", tView))
         }
     }
 }

@@ -9,18 +9,16 @@ import java.util.*
 
 class NetcatService : Service() {
 
-    private val LogTag: String = "NetcatService"
-
     private val myBinder = MyLocalBinder()
 
-    private val sendQueue : LinkedList<String> = LinkedList()
+    private val sendQueue: LinkedList<String> = LinkedList()
 
     override fun onBind(intent: Intent): IBinder? {
         return myBinder
     }
 
     inner class MyLocalBinder : Binder() {
-        fun getService() : NetcatService {
+        fun getService(): NetcatService {
             return this@NetcatService
         }
     }
