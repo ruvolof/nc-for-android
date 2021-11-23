@@ -72,6 +72,10 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
             if (it.matches(Regex("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$"))) {
                 host = it
             }
+            else if (it.matches(
+                        Regex("^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)+[a-zA-Z]{2,}\$"))) {
+                host = it
+            }
             else if (it.startsWith("-")) {
                 var nit : String = it.substring(1)
                 var v_arr = nit.toCharArray()
