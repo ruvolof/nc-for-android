@@ -13,11 +13,12 @@ import java.util.*
 class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
 
     companion object {
-        val netcat_cmd_extra: String = "NETCAT_CMD"
-        val netcat_cmd_string: String = "NETCAT_CMD_STRING"
+        const val netcat_cmd_extra: String = "NETCAT_CMD"
+        const val netcat_cmd_string: String = "NETCAT_CMD_STRING"
+        const val IP_REGEXP = "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$"
+        const val DOMAIN_REGEXP = "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)+[a-zA-Z]{2,}\$"
     }
 
-    private val LogTag: String = "AndroidNetcatHome"
     private lateinit var btn_start_netcat: ImageButton
     private lateinit var nc_command_line_edittext: EditText
     private var nc_cmd_text: String? = null
@@ -67,13 +68,13 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
 
         var expect_port: Boolean = false
 
-
         args.forEach () {
-            if (it.matches(Regex("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$"))) {
-                host = it
-            }
-            else if (it.matches(
-                        Regex("^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)+[a-zA-Z]{2,}\$"))) {
+            if (it.matches(Regex(IP_REGEXP)) or it.matches(Regex(DOMAIN_REGEXP))) {
+                if (host != null) {
+                    Toast.makeText(this,"Only one host allowed. See examples.",
+                        Toast.LENGTH_SHORT).show()
+                    return
+                }
                 host = it
             }
             else if (it.startsWith("-")) {
