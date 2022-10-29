@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".NetcatSession">
 
     <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/et_nc_send_text"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/tv_connection"
@@ -18,31 +23,28 @@
             android:padding="2dp" />
     </ScrollView>
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <EditText
+        android:id="@+id/et_nc_send_text"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#ffffff"
-        android:orientation="horizontal"
-        android:layout_alignParentBottom="true">
+        android:inputType="text"
+        android:layout_weight="2"
+        android:padding="10dp"
+        android:hint="@string/ed_type_your_message"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btn_send_text"
+        app:layout_constraintStart_toStartOf="parent" />
 
-        <EditText
-            android:id="@+id/et_nc_send_text"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:inputType="text"
-            android:layout_weight="2"
-            android:padding="10dp"
-            android:hint="@string/ed_type_your_message"/>
+    <ImageButton
+        android:id="@+id/btn_send_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:scaleType="fitCenter"
+        android:padding="20dp"
+        android:layout_margin="10dp"
+        android:background="@android:drawable/ic_menu_send"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        <ImageButton
-            android:id="@+id/btn_send_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:scaleType="fitCenter"
-            android:padding="20dp"
-            android:layout_margin="10dp"
-            android:background="@android:drawable/ic_menu_send"/>
-    </LinearLayout>
-
-</RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
