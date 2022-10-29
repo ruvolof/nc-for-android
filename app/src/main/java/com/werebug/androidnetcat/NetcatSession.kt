@@ -31,7 +31,7 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
 
         netcatSessionArgs =
             intent.getSerializableExtra(AndroidNetcatHome.netcat_cmd_extra) as AndroidNetcatHome.SessionArgs
-        netcatCmdText = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string)
+        netcatCmdText = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string).toString()
 
         title = netcatCmdText
 

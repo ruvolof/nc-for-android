@@ -98,7 +98,7 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
         }
 
         if ((host != null && port != null) || (host == null && port != null && listen)) {
-            val sessionArgs = SessionArgs(host, port as Int, listen, proto)
+            val sessionArgs = SessionArgs(host, port, listen, proto)
             startNetcatSessionActivity(sessionArgs)
         } else {
             Toast.makeText(this, R.string.nc_wrong_syntax, Toast.LENGTH_SHORT).show()
