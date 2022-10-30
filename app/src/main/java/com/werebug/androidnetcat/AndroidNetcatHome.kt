@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.Toast
+import com.werebug.androidnetcat.databinding.ActivityNetcatHomeBinding
 import java.io.Serializable
 import java.util.*
 
@@ -19,6 +20,7 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
         const val DOMAIN_REGEXP = "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)+[a-zA-Z]{2,}\$"
     }
 
+    private lateinit var binding: ActivityNetcatHomeBinding;
     private lateinit var btnStartNetcat: ImageButton
     private lateinit var ncCommandLineEdittext: EditText
     private var ncCmdText: String? = null
@@ -34,10 +36,10 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_netcat_home)
+        binding = ActivityNetcatHomeBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        btnStartNetcat = findViewById(R.id.btn_start_netcat)
-        btnStartNetcat.setOnClickListener(this)
+        binding.btnStartNetcat.setOnClickListener(this)
 
         ncCommandLineEdittext = findViewById(R.id.et_nc_command_line)
     }
@@ -45,7 +47,7 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
     override fun onClick(v: View?) {
         when (v?.id) {
             R.id.btn_start_netcat -> {
-                ncCmdText = ncCommandLineEdittext.text.toString()
+                ncCmdText = binding.etNcCommandLine.text.toString()
                 checkCommandSyntax(ncCmdText as String)
             }
         }

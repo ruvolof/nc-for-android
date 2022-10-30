@@ -8,38 +8,28 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.IBinder
 import android.view.View
-import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.TextView
+import com.werebug.androidnetcat.databinding.ActivityNetcatSessionBinding
 
 class NetcatSession : AppCompatActivity(), View.OnClickListener {
 
     private val LogTag: String = "NetcatSessionActivity"
 
+    private lateinit var binding: ActivityNetcatSessionBinding;
     private lateinit var netcatSessionArgs: AndroidNetcatHome.SessionArgs
-    private lateinit var netcatCmdText: String
-    private lateinit var tvNetcatConnection: TextView
-    private lateinit var etNcSendText: EditText
-    private lateinit var btnSend: ImageButton
 
     var myService: NetcatService? = null
     var isBound = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_netcat_session)
+        binding = ActivityNetcatSessionBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         netcatSessionArgs =
             intent.getSerializableExtra(AndroidNetcatHome.netcat_cmd_extra) as AndroidNetcatHome.SessionArgs
-        netcatCmdText = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string).toString()
+        title = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string).toString()
 
-        title = netcatCmdText
-
-        tvNetcatConnection = findViewById(R.id.tv_connection)
-        etNcSendText = findViewById(R.id.et_nc_send_text)
-
-        btnSend = findViewById(R.id.btn_send_text)
-        btnSend.setOnClickListener(this)
+        binding.btnSendText.setOnClickListener(this);
 
         val startServiceIntent = Intent(this, NetcatService::class.java)
         bindService(startServiceIntent, myConnection, Context.BIND_AUTO_CREATE)
@@ -54,18 +44,18 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
                 myService?.beginTCPConnection(
                     netcatSessionArgs.host as String,
                     netcatSessionArgs.port,
-                    tvNetcatConnection
+                    binding.tvConnection
                 )
             } else if (netcatSessionArgs.host == null && netcatSessionArgs.listen && netcatSessionArgs.proto == AndroidNetcatHome.Proto.TCP) {
-                myService?.beginTCPListener(netcatSessionArgs.port, tvNetcatConnection)
+                myService?.beginTCPListener(netcatSessionArgs.port, binding.tvConnection)
             } else if (netcatSessionArgs.host != null && netcatSessionArgs.proto == AndroidNetcatHome.Proto.UDP && !netcatSessionArgs.listen) {
                 myService?.beginUDPConnection(
                     netcatSessionArgs.host as String,
                     netcatSessionArgs.port,
-                    tvNetcatConnection
+                    binding.tvConnection
                 )
             } else if (netcatSessionArgs.host == null && netcatSessionArgs.listen && netcatSessionArgs.proto == AndroidNetcatHome.Proto.UDP) {
-                myService?.beginUDPListener(netcatSessionArgs.port, tvNetcatConnection)
+                myService?.beginUDPListener(netcatSessionArgs.port, binding.tvConnection)
             }
         }
 
@@ -78,8 +68,8 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         when (v?.id) {
             R.id.btn_send_text -> {
                 if (isBound && myService != null) {
-                    val text: String = etNcSendText.text.toString()
-                    etNcSendText.text.clear()
+                    val text: String = binding.etNcSendText.text.toString();
+                    binding.etNcSendText.text.clear()
                     myService?.send(text)
                 }
             }
