@@ -4,7 +4,8 @@
     <string name="ed_type_your_message">Message</string>
     <string name="error_wrong_syntax">Wrong syntax. See examples.</string>
     <string name="error_expected_port">Expected port after -p. See examples.</string>
-    <string name="error_multiple_host">Only one host allowed. See examples.</string>
+    <string name="error_multiple_hosts">Only one host allowed. See examples.</string>
+    <string name="error_multiple_ports">Only one port allowed. See examples.</string>
     <string name="error_port_range">Allowed ports: 1–65535</string>
     <string name="error_missing_nc">Start your command with nc. See examples.</string>
 

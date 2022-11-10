@@ -91,7 +91,7 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
         for (arg in args) {
             if (isValidHostString(arg)) {
                 if (host != null) {
-                    showErrorToast(R.string.error_multiple_host)
+                    showErrorToast(R.string.error_multiple_hosts)
                     return null
                 }
                 host = arg
@@ -113,7 +113,12 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
                 showErrorToast(R.string.error_expected_port)
                 return null
             } else if (expectPort || isValidPortString(arg)) {
+                if (port != null) {
+                    showErrorToast(R.string.error_multiple_ports)
+                    return null
+                }
                 port = arg.toInt()
+                expectPort = false
                 if (!validatePortRange(port)) {
                     showErrorToast(R.string.error_port_range)
                     return null
