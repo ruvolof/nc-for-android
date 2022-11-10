@@ -54,13 +54,33 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+    private fun showErrorToast(text: Int) {
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun validatePortRange(port: Int): Boolean {
+        return port in 1..65535
+    }
+
+    private fun isValidHostString(host: String): Boolean {
+        return host.matches(Regex(IP_REGEXP)) or host.matches(Regex(DOMAIN_REGEXP))
+    }
+
+    private fun isValidPortString(port: String): Boolean {
+        try {
+            port.toInt()
+            return true
+        } catch (e: NumberFormatException) {
+            return false
+        }
+    }
+
     private fun validateAndGetSessionArgs(ncCmdText: String) : SessionArgs? {
         val args = LinkedList(ncCmdText.split(" "))
         if (args.pop() != "nc") {
-            Toast.makeText(this, R.string.nc_wrong_syntax, Toast.LENGTH_SHORT).show()
+            showErrorToast(R.string.error_missing_nc)
             return null
         }
-
         var host: String? = null
         var port: Int? = null
         var listen = false
@@ -68,48 +88,43 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
         var lineEnd = "\n"
 
         var expectPort = false
-
         for (arg in args) {
-            if (arg.matches(Regex(IP_REGEXP)) or arg.matches(Regex(DOMAIN_REGEXP))) {
+            if (isValidHostString(arg)) {
                 if (host != null) {
-                    Toast.makeText(
-                        this, "Only one host allowed. See examples.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    showErrorToast(R.string.error_multiple_host)
                     return null
                 }
                 host = arg
             } else if (arg.startsWith("-")) {
                 val flags = arg.substring(1).toCharArray()
-                flags.forEach {
-                    when (it) {
+                for (i in 0..flags.size - 1) {
+                    if (expectPort) {
+                        showErrorToast(R.string.error_expected_port)
+                        return null
+                    }
+                    when (flags[i]) {
                         'l' -> listen = true
                         'u' -> proto = Proto.UDP
                         'p' -> expectPort = true
                         'C' -> lineEnd = "\r\n"
                     }
                 }
-            } else if (expectPort && !arg.matches(Regex("^\\d{1,5}$"))) {
-                Toast.makeText(this, R.string.nc_wrong_syntax, Toast.LENGTH_SHORT).show()
+            } else if (expectPort && !isValidPortString(arg)) {
+                showErrorToast(R.string.error_expected_port)
                 return null
-            } else if (expectPort || arg.matches(Regex("^\\d{1,5}$"))) {
+            } else if (expectPort || isValidPortString(arg)) {
                 port = arg.toInt()
-                if (!checkPortRange(port)) {
-                    Toast.makeText(this, R.string.wrong_port_range, Toast.LENGTH_SHORT).show()
+                if (!validatePortRange(port)) {
+                    showErrorToast(R.string.error_port_range)
                     return null
                 }
             }
         }
-
         if ((host != null && port != null) || (host == null && port != null && listen)) {
             return SessionArgs(host, port, listen, proto, lineEnd)
         }
-        Toast.makeText(this, R.string.nc_wrong_syntax, Toast.LENGTH_SHORT).show()
+        showErrorToast(R.string.error_wrong_syntax)
         return null
-    }
-
-    private fun checkPortRange(port: Int): Boolean {
-        return port in 1..65535
     }
 
     private fun startNetcatSessionActivity(args: SessionArgs) {

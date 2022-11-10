@@ -1,9 +1,12 @@
 <resources>
-    <string name="app_name">nc</string>
+    <string name="app_name">Netcat for Android</string>
     <string name="nc_input_hint">nc 127.0.0.1 9999</string>
-    <string name="nc_wrong_syntax">Wrong syntax. See examples.</string>
     <string name="ed_type_your_message">Message</string>
-    <string name="wrong_port_range">Allowed ports: 1–65535</string>
+    <string name="error_wrong_syntax">Wrong syntax. See examples.</string>
+    <string name="error_expected_port">Expected port after -p. See examples.</string>
+    <string name="error_multiple_host">Only one host allowed. See examples.</string>
+    <string name="error_port_range">Allowed ports: 1–65535</string>
+    <string name="error_missing_nc">Start your command with nc. See examples.</string>
 
     <string name="main_credits">nc for Android\nCreated by Werebug (https://werebug.com)</string>
     <string name="main_options">OPTIONS:\n-l Listen for incoming connections\n-p PORT Specify source port\n-u Use UDP instead of default TCP\n-C Use CRLF for EOL sequence</string>
