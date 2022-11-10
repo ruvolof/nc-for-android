@@ -40,23 +40,7 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
             val binder = service as NetcatService.MyLocalBinder
             myService = binder.getService()
             isBound = true
-            if (netcatSessionArgs.host != null && netcatSessionArgs.proto == AndroidNetcatHome.Proto.TCP && !netcatSessionArgs.listen) {
-                myService?.beginTCPConnection(
-                    netcatSessionArgs.host as String,
-                    netcatSessionArgs.port,
-                    binding.tvConnection
-                )
-            } else if (netcatSessionArgs.host == null && netcatSessionArgs.listen && netcatSessionArgs.proto == AndroidNetcatHome.Proto.TCP) {
-                myService?.beginTCPListener(netcatSessionArgs.port, binding.tvConnection)
-            } else if (netcatSessionArgs.host != null && netcatSessionArgs.proto == AndroidNetcatHome.Proto.UDP && !netcatSessionArgs.listen) {
-                myService?.beginUDPConnection(
-                    netcatSessionArgs.host as String,
-                    netcatSessionArgs.port,
-                    binding.tvConnection
-                )
-            } else if (netcatSessionArgs.host == null && netcatSessionArgs.listen && netcatSessionArgs.proto == AndroidNetcatHome.Proto.UDP) {
-                myService?.beginUDPListener(netcatSessionArgs.port, binding.tvConnection)
-            }
+            myService?.beginConnection(netcatSessionArgs, binding.tvConnection)
         }
 
         override fun onServiceDisconnected(name: ComponentName) {

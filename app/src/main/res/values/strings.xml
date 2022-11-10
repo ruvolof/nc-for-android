@@ -6,7 +6,7 @@
     <string name="wrong_port_range">Allowed ports: 1–65535</string>
 
     <string name="main_credits">nc for Android\nCreated by Werebug (https://werebug.com)</string>
-    <string name="main_options">OPTIONS:\n-l bind socket\n-p PORT set port\n-u use UDP protocol</string>
-    <string name="main_examples">EXAMPLES:\nnc 127.0.0.1 9999\nnc -lp 9999\nnc -u 127.0.0.1 9999\nnc -ulp 9999</string>
+    <string name="main_options">OPTIONS:\n-l Listen for incoming connections\n-p PORT Specify source port\n-u Use UDP instead of default TCP\n-C Use CRLF for EOL sequence</string>
+    <string name="main_examples">EXAMPLES:\nnc 192.168.1.100 9999\nnc -lp 9999\nnc -u 192.168.1.100 9999\nnc -ulp 9999</string>
     <string name="main_source">Source code: https://github.com/ruvolof/nc-for-android\nPlease use Github to submit bugs or feature requests.</string>
 </resources>

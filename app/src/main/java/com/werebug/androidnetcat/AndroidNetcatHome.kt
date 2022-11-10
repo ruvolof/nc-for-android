@@ -4,8 +4,6 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.widget.EditText
-import android.widget.ImageButton
 import android.widget.Toast
 import com.werebug.androidnetcat.databinding.ActivityNetcatHomeBinding
 import java.io.Serializable
@@ -21,17 +19,19 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
     }
 
     private lateinit var binding: ActivityNetcatHomeBinding;
-    private lateinit var btnStartNetcat: ImageButton
-    private lateinit var ncCommandLineEdittext: EditText
-    private var ncCmdText: String? = null
+    private var ncCmdText: String = ""
 
     enum class Proto {
         TCP,
         UDP
     }
 
-    class SessionArgs(val host: String?, val port: Int, val listen: Boolean, val proto: Proto) :
-        Serializable {
+    class SessionArgs(
+        val host: String?,
+        val port: Int,
+        val listen: Boolean,
+        val proto: Proto,
+        val lineEnd: String = "\n") : Serializable {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,30 +40,32 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
         setContentView(binding.root)
 
         binding.btnStartNetcat.setOnClickListener(this)
-
-        ncCommandLineEdittext = findViewById(R.id.et_nc_command_line)
     }
 
     override fun onClick(v: View?) {
         when (v?.id) {
             R.id.btn_start_netcat -> {
                 ncCmdText = binding.etNcCommandLine.text.toString()
-                checkCommandSyntax(ncCmdText as String)
+                val sessionArgs = validateAndGetSessionArgs(ncCmdText)
+                if (sessionArgs != null) {
+                    startNetcatSessionActivity(sessionArgs)
+                }
             }
         }
     }
 
-    private fun checkCommandSyntax(ncCmdText: String) {
+    private fun validateAndGetSessionArgs(ncCmdText: String) : SessionArgs? {
         val args = LinkedList(ncCmdText.split(" "))
         if (args.pop() != "nc") {
             Toast.makeText(this, R.string.nc_wrong_syntax, Toast.LENGTH_SHORT).show()
-            return
+            return null
         }
 
         var host: String? = null
         var port: Int? = null
         var listen = false
-        var proto: Proto = Proto.TCP
+        var proto = Proto.TCP
+        var lineEnd = "\n"
 
         var expectPort = false
 
@@ -74,37 +76,36 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
                         this, "Only one host allowed. See examples.",
                         Toast.LENGTH_SHORT
                     ).show()
-                    return
+                    return null
                 }
                 host = arg
             } else if (arg.startsWith("-")) {
-                val nit: String = arg.substring(1)
-                val vArr = nit.toCharArray()
-                vArr.forEach {
+                val flags = arg.substring(1).toCharArray()
+                flags.forEach {
                     when (it) {
                         'l' -> listen = true
                         'u' -> proto = Proto.UDP
                         'p' -> expectPort = true
+                        'C' -> lineEnd = "\r\n"
                     }
                 }
             } else if (expectPort && !arg.matches(Regex("^\\d{1,5}$"))) {
                 Toast.makeText(this, R.string.nc_wrong_syntax, Toast.LENGTH_SHORT).show()
-                return
+                return null
             } else if (expectPort || arg.matches(Regex("^\\d{1,5}$"))) {
                 port = arg.toInt()
                 if (!checkPortRange(port)) {
                     Toast.makeText(this, R.string.wrong_port_range, Toast.LENGTH_SHORT).show()
-                    return
+                    return null
                 }
             }
         }
 
         if ((host != null && port != null) || (host == null && port != null && listen)) {
-            val sessionArgs = SessionArgs(host, port, listen, proto)
-            startNetcatSessionActivity(sessionArgs)
-        } else {
-            Toast.makeText(this, R.string.nc_wrong_syntax, Toast.LENGTH_SHORT).show()
+            return SessionArgs(host, port, listen, proto, lineEnd)
         }
+        Toast.makeText(this, R.string.nc_wrong_syntax, Toast.LENGTH_SHORT).show()
+        return null
     }
 
     private fun checkPortRange(port: Int): Boolean {
