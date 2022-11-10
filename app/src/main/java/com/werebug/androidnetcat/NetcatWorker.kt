@@ -125,15 +125,14 @@ class NetcatWorker(
     private fun readFromChannel(socketChannel: ByteChannel, buffer: ByteBuffer) {
         val intRead: Int = socketChannel.read(buffer)
         if (intRead > 0) {
-            val bufferArr = buffer.array()
-            val bufferStr = String(bufferArr.slice(IntRange(0, intRead - 1)).toByteArray())
-            updateUIHandler.post(UpdateTextView(bufferStr, tView))
+            updateUIHandler.post(UpdateTextView(
+                String(buffer.array().slice(IntRange(0, intRead - 1)).toByteArray()), tView))
         }
     }
 
     private fun sendFromQueue(socketChannel: ByteChannel) {
         while (!sendQueue.isEmpty()) {
-            val msg: String = sendQueue.pop() + sessionArgs.lineEnd
+            val msg = "${sendQueue.pop()}${sessionArgs.lineEnd}"
             val sendBuf = ByteBuffer.wrap(msg.toByteArray())
             while (sendBuf.hasRemaining()) {
                 socketChannel.write(sendBuf)
