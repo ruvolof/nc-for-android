@@ -34,6 +34,13 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         bindService(startServiceIntent, myConnection, Context.BIND_AUTO_CREATE)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        if (myService != null) {
+            unbindService(myConnection)
+        }
+    }
+
     private val myConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             val binder = service as NetcatService.MyLocalBinder
