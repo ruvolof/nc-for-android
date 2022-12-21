@@ -16,11 +16,11 @@ import java.util.*
 
 class NetcatWorker(
     private val sessionArgs: AndroidNetcatHome.SessionArgs,
-    private val tView: TextView,
-    private val sendQueue: LinkedList<String>
+    private val tView: TextView
 ) : Thread() {
 
-    val updateUIHandler: Handler = Handler(Looper.getMainLooper())
+    private val sendQueue = LinkedList<String>()
+    private val updateUIHandler: Handler = Handler(Looper.getMainLooper())
 
     class UpdateTextView(private val t: String, private val v: TextView) : Runnable {
         override fun run() {
@@ -181,5 +181,9 @@ class NetcatWorker(
             sendFromUserInputQueue(channel)
             readAndUpdateView(channel)
         }
+    }
+
+    fun addToSendQueue(message: String) {
+        sendQueue.add(message)
     }
 }

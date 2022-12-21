@@ -16,9 +16,7 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
 
     private lateinit var binding: ActivityNetcatSessionBinding;
     private lateinit var netcatSessionArgs: AndroidNetcatHome.SessionArgs
-
-    var myService: NetcatService? = null
-    var isBound = false
+    private lateinit var worker: NetcatWorker
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,38 +28,17 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
                     as AndroidNetcatHome.SessionArgs
         title = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string).toString()
         binding.btnSendText.setOnClickListener(this);
-        val startServiceIntent = Intent(this, NetcatService::class.java)
-        bindService(startServiceIntent, myConnection, Context.BIND_AUTO_CREATE)
-    }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        if (myService != null) {
-            unbindService(myConnection)
-        }
-    }
-
-    private val myConnection = object : ServiceConnection {
-        override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            val binder = service as NetcatService.MyLocalBinder
-            myService = binder.getService()
-            isBound = true
-            myService?.beginConnection(netcatSessionArgs, binding.tvConnection)
-        }
-
-        override fun onServiceDisconnected(name: ComponentName) {
-            isBound = false
-        }
+        worker = NetcatWorker(netcatSessionArgs, binding.tvConnection)
+        worker.start()
     }
 
     override fun onClick(v: View?) {
         when (v?.id) {
             R.id.btn_send_text -> {
-                if (isBound && myService != null) {
-                    val text: String = binding.etNcSendText.text.toString();
-                    binding.etNcSendText.text.clear()
-                    myService?.send(text)
-                }
+                val text: String = binding.etNcSendText.text.toString();
+                binding.etNcSendText.text.clear()
+                worker.addToSendQueue(text)
             }
         }
     }
