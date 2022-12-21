@@ -4,13 +4,16 @@
     <string name="ed_type_your_message">Message</string>
     <string name="error_wrong_syntax">Wrong syntax. See examples.</string>
     <string name="error_expected_port">Expected port after -p. See examples.</string>
+    <string name="error_expected_command">Expected command after -e. See examples.</string>
     <string name="error_multiple_hosts">Only one host allowed. See examples.</string>
     <string name="error_multiple_ports">Only one port allowed. See examples.</string>
+    <string name="error_multiple_commands">Only one command allowed. See examples.</string>
     <string name="error_port_range">Allowed ports: 1–65535</string>
+    <string name="error_udp_with_command">-e option is only supported for TCP.</string>
     <string name="error_missing_nc">Start your command with nc. See examples.</string>
 
     <string name="main_credits">nc for Android\nCreated by Werebug (https://werebug.com)</string>
-    <string name="main_options">OPTIONS:\n-l Listen for incoming connections\n-p PORT Specify source port\n-u Use UDP instead of default TCP\n-C Use CRLF for EOL sequence</string>
-    <string name="main_examples">EXAMPLES:\nnc 192.168.1.100 9999\nnc -lp 9999\nnc -u 192.168.1.100 9999\nnc -ulp 9999</string>
+    <string name="main_options">OPTIONS:\n-l Listen for incoming connections\n-p PORT Specify source port\n-u Use UDP instead of default TCP\n-C Use CRLF for EOL sequence\n-e CMD Execute CMD and redirect I/O</string>
+    <string name="main_examples">EXAMPLES:\nnc 192.168.1.100 9999\nnc -lp 9999\nnc -u 192.168.1.100 9999\nnc -ulp 9999\nnc -lp 9999 -e /system/bin/sh</string>
     <string name="main_source">Source code: https://github.com/ruvolof/nc-for-android\nPlease use Github to submit bugs or feature requests.</string>
 </resources>

@@ -10,7 +10,6 @@ import java.util.*
 class NetcatService : Service() {
 
     private val myBinder = MyLocalBinder()
-
     private val sendQueue: LinkedList<String> = LinkedList()
 
     override fun onBind(intent: Intent): IBinder? {

@@ -31,7 +31,8 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
         val port: Int,
         val listen: Boolean,
         val proto: Proto,
-        val lineEnd: String = "\n") : Serializable {
+        val lineEnd: String = "\n",
+        val exec: String?) : Serializable {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,8 +87,10 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
         var listen = false
         var proto = Proto.TCP
         var lineEnd = "\n"
+        var command: String? = null
 
         var expectPort = false
+        var expectCommand = false
         for (arg in args) {
             if (isValidHostString(arg)) {
                 if (host != null) {
@@ -102,13 +105,25 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
                         showErrorToast(R.string.error_expected_port)
                         return null
                     }
+                    else if (expectCommand) {
+                        showErrorToast(R.string.error_expected_command)
+                        return null
+                    }
                     when (flags[i]) {
                         'l' -> listen = true
                         'u' -> proto = Proto.UDP
                         'p' -> expectPort = true
                         'C' -> lineEnd = "\r\n"
+                        'e' -> expectCommand = true
                     }
                 }
+            } else if (expectCommand) {
+                if (command != null) {
+                    showErrorToast(R.string.error_multiple_commands)
+                    return null
+                }
+                command = arg.toString()
+                expectCommand = false
             } else if (expectPort && !isValidPortString(arg)) {
                 showErrorToast(R.string.error_expected_port)
                 return null
@@ -125,8 +140,12 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
                 }
             }
         }
+        if (proto == Proto.UDP && command != null) {
+            showErrorToast(R.string.error_udp_with_command)
+            return null
+        }
         if ((host != null && port != null) || (host == null && port != null && listen)) {
-            return SessionArgs(host, port, listen, proto, lineEnd)
+            return SessionArgs(host, port, listen, proto, lineEnd, command)
         }
         showErrorToast(R.string.error_wrong_syntax)
         return null

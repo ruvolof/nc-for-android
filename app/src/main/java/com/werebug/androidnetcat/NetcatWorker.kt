@@ -2,8 +2,9 @@ package com.werebug.androidnetcat
 
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.widget.TextView
-import java.io.IOException
+import java.io.*
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 import java.nio.ByteBuffer
@@ -19,13 +20,17 @@ class NetcatWorker(
     private val sendQueue: LinkedList<String>
 ) : Thread() {
 
-    var updateUIHandler: Handler = Handler(Looper.getMainLooper())
+    val updateUIHandler: Handler = Handler(Looper.getMainLooper())
 
     class UpdateTextView(private val t: String, private val v: TextView) : Runnable {
         override fun run() {
             val nText: String = v.text.toString() + t
             v.text = nText
         }
+    }
+
+    private fun updateMainView(message: String) {
+        updateUIHandler.post(UpdateTextView(message, tView))
     }
 
     override fun run() {
@@ -45,21 +50,17 @@ class NetcatWorker(
     private fun openTCPConnection() {
         try {
             val socketChannel: SocketChannel = SocketChannel.open()
-            socketChannel.configureBlocking(false)
             socketChannel.connect(InetSocketAddress(sessionArgs.host, sessionArgs.port))
-            while (!socketChannel.finishConnect()) {
-                sleep(200)
-            }
-            updateUIHandler.post(UpdateTextView(
-                "${sessionArgs.host} ${sessionArgs.port} open\n", tView))
-            val buffer: ByteBuffer = ByteBuffer.allocate(1024)
-            while (true) {
-                sendFromQueue(socketChannel)
-                readFromChannel(socketChannel, buffer)
-                buffer.clear()
+            socketChannel.finishConnect()
+            updateMainView("${sessionArgs.host} ${sessionArgs.port} open\n")
+            socketChannel.configureBlocking(false)
+            if (sessionArgs.exec == null) {
+                startTwoWayChannel(socketChannel)
+            } else {
+                redirectProcessStreamsToSocket(sessionArgs.exec, socketChannel)
             }
         } catch (e: IOException) {
-            handlerIOException(e)
+            updateViewOnException(e)
         }
     }
 
@@ -67,21 +68,18 @@ class NetcatWorker(
         try {
             val serverSocket: ServerSocketChannel = ServerSocketChannel.open()
             serverSocket.socket().bind(InetSocketAddress(sessionArgs.port))
-            updateUIHandler.post(UpdateTextView(
-                "Listening on ${serverSocket.socket().localSocketAddress}\n", tView))
+            updateMainView("Listening on ${serverSocket.socket().localSocketAddress}\n")
             val clientChannel: SocketChannel = serverSocket.accept()
             clientChannel.configureBlocking(false)
-            updateUIHandler.post(UpdateTextView(
-                "Received connection from ${clientChannel.socket().remoteSocketAddress}\n",
-                tView))
-            val buffer: ByteBuffer = ByteBuffer.allocate(1024)
-            while (true) {
-                sendFromQueue(clientChannel)
-                readFromChannel(clientChannel, buffer)
-                buffer.clear()
+            updateMainView(
+                "Received connection from ${clientChannel.socket().remoteSocketAddress}\n")
+            if (sessionArgs.exec == null) {
+                startTwoWayChannel(clientChannel)
+            } else {
+                redirectProcessStreamsToSocket(sessionArgs.exec, clientChannel)
             }
         } catch (e: IOException) {
-            handlerIOException(e)
+            updateViewOnException(e)
         }
     }
 
@@ -90,14 +88,9 @@ class NetcatWorker(
             val datagramChannel: DatagramChannel = DatagramChannel.open()
             datagramChannel.configureBlocking(false)
             datagramChannel.connect(InetSocketAddress(sessionArgs.host, sessionArgs.port))
-            val buffer: ByteBuffer = ByteBuffer.allocate(65535)
-            while (true) {
-                sendFromQueue(datagramChannel)
-                readFromChannel(datagramChannel, buffer)
-                buffer.clear()
-            }
+            startTwoWayChannel(datagramChannel)
         } catch (e: IOException) {
-            handlerIOException(e)
+            updateViewOnException(e)
         }
     }
 
@@ -105,45 +98,88 @@ class NetcatWorker(
         try {
             val datagramChannel: DatagramChannel = DatagramChannel.open()
             datagramChannel.socket().bind(InetSocketAddress(sessionArgs.port))
+            updateMainView("Listening on ${datagramChannel.socket().localSocketAddress}\n")
             val buffer: ByteBuffer = ByteBuffer.allocate(65535)
             val clientAddress: SocketAddress = datagramChannel.receive(buffer)
-            updateUIHandler.post(UpdateTextView("Received datagram from $clientAddress\n", tView))
-            updateUIHandler.post(UpdateTextView(
-                String(buffer.array().slice(IntRange(0, buffer.position())).toByteArray()), tView))
+            updateMainView("Received datagram from $clientAddress\n")
+            updateMainView(
+                String(buffer.array().slice(IntRange(0, buffer.position())).toByteArray()))
             datagramChannel.connect(clientAddress)
             datagramChannel.configureBlocking(false)
-            while (true) {
-                sendFromQueue(datagramChannel)
-                readFromChannel(datagramChannel, buffer)
-                buffer.clear()
-            }
+            startTwoWayChannel(datagramChannel)
         } catch (e: IOException) {
-            handlerIOException(e)
+            updateViewOnException(e)
         }
     }
 
-    private fun readFromChannel(socketChannel: ByteChannel, buffer: ByteBuffer) {
-        val intRead: Int = socketChannel.read(buffer)
-        if (intRead > 0) {
-            updateUIHandler.post(UpdateTextView(
-                String(buffer.array().slice(IntRange(0, intRead - 1)).toByteArray()), tView))
+    private fun readBytes(socketChannel: ByteChannel): ByteArray {
+        val buffer = ByteBuffer.allocate(65535)
+        val readCount = socketChannel.read(buffer)
+        if (readCount == -1) {
+            throw IOException("Connection closed by the remote host.")
+        }
+        if (readCount > 0) {
+            return buffer.array().slice(IntRange(0, readCount - 1)).toByteArray()
+        }
+        return byteArrayOf()
+    }
+
+    private fun readAndUpdateView(socketChannel: ByteChannel) {
+        val bytes = readBytes(socketChannel)
+        if (bytes.size > 0) {
+            updateUIHandler.post(UpdateTextView(String(bytes), tView))
         }
     }
 
-    private fun sendFromQueue(socketChannel: ByteChannel) {
+    private fun sendBytes(channel: ByteChannel, bytes: ByteArray) {
+        val sendBuffer = ByteBuffer.wrap(bytes)
+        while (sendBuffer.hasRemaining()) {
+            channel.write(sendBuffer)
+        }
+    }
+
+    private fun sendFromUserInputQueue(socketChannel: ByteChannel) {
         while (!sendQueue.isEmpty()) {
             val msg = "${sendQueue.pop()}${sessionArgs.lineEnd}"
-            val sendBuf = ByteBuffer.wrap(msg.toByteArray())
-            while (sendBuf.hasRemaining()) {
-                socketChannel.write(sendBuf)
-            }
+            sendBytes(socketChannel, msg.toByteArray())
             updateUIHandler.post(UpdateTextView(msg, tView))
         }
     }
 
-    private fun handlerIOException(e: IOException) {
+    private fun updateViewOnException(e: IOException) {
         if (e.message != null) {
             updateUIHandler.post(UpdateTextView("${e.message}\n", tView))
+        }
+    }
+
+    private fun redirectProcessStreamsToSocket(command: String, socket: ByteChannel) {
+        val process = ProcessBuilder(command).redirectErrorStream(true).start();
+        val processStdout = process.inputStream
+        val processStdin = process.outputStream
+        var exited = false
+        while (!exited) {
+            val outputByteCount = processStdout.available()
+            if (outputByteCount > 0) {
+                val bytes = ByteArray(outputByteCount)
+                processStdout.read(bytes)
+                sendBytes(socket, bytes)
+            }
+            val inputFromSocket = readBytes(socket)
+            if (inputFromSocket.isNotEmpty()) {
+                processStdin.write(inputFromSocket)
+                processStdin.flush()
+            }
+            try {
+                process.exitValue()
+                exited = true
+            } catch (_: IllegalThreadStateException) { }
+        }
+    }
+
+    private fun startTwoWayChannel(channel: ByteChannel) {
+        while (true) {
+            sendFromUserInputQueue(channel)
+            readAndUpdateView(channel)
         }
     }
 }

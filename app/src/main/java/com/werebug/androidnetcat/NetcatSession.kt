@@ -26,11 +26,10 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         setContentView(binding.root)
 
         netcatSessionArgs =
-            intent.getSerializableExtra(AndroidNetcatHome.netcat_cmd_extra) as AndroidNetcatHome.SessionArgs
+            intent.getSerializableExtra(AndroidNetcatHome.netcat_cmd_extra)
+                    as AndroidNetcatHome.SessionArgs
         title = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string).toString()
-
         binding.btnSendText.setOnClickListener(this);
-
         val startServiceIntent = Intent(this, NetcatService::class.java)
         bindService(startServiceIntent, myConnection, Context.BIND_AUTO_CREATE)
     }
