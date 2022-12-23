@@ -2,7 +2,6 @@ package com.werebug.androidnetcat
 
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.widget.TextView
 import java.io.*
 import java.net.InetSocketAddress
@@ -16,21 +15,27 @@ import java.util.*
 
 class NetcatWorker(
     private val sessionArgs: AndroidNetcatHome.SessionArgs,
-    private val tView: TextView
+    private val mainView: TextView
 ) : Thread() {
 
     private val sendQueue = LinkedList<String>()
     private val updateUIHandler: Handler = Handler(Looper.getMainLooper())
 
-    class UpdateTextView(private val t: String, private val v: TextView) : Runnable {
+    class AppendToTextView(private val message: String, private val view: TextView) : Runnable {
         override fun run() {
-            val nText: String = v.text.toString() + t
-            v.text = nText
+            val newText = "${view.text}${message}"
+            view.text = newText
         }
     }
 
     private fun updateMainView(message: String) {
-        updateUIHandler.post(UpdateTextView(message, tView))
+        updateUIHandler.post(AppendToTextView(message, mainView))
+    }
+
+    private fun updateViewOnException(e: IOException) {
+        if (e.message != null) {
+            updateMainView("${e.message}\n")
+        }
     }
 
     override fun run() {
@@ -72,7 +77,8 @@ class NetcatWorker(
             val clientChannel: SocketChannel = serverSocket.accept()
             clientChannel.configureBlocking(false)
             updateMainView(
-                "Received connection from ${clientChannel.socket().remoteSocketAddress}\n")
+                "Received connection from ${clientChannel.socket().remoteSocketAddress}\n"
+            )
             if (sessionArgs.exec == null) {
                 startTwoWayChannel(clientChannel)
             } else {
@@ -103,7 +109,10 @@ class NetcatWorker(
             val clientAddress: SocketAddress = datagramChannel.receive(buffer)
             updateMainView("Received datagram from $clientAddress\n")
             updateMainView(
-                String(buffer.array().slice(IntRange(0, buffer.position())).toByteArray()))
+                String(
+                    buffer.array().slice(IntRange(0, buffer.position())).toByteArray()
+                )
+            )
             datagramChannel.connect(clientAddress)
             datagramChannel.configureBlocking(false)
             startTwoWayChannel(datagramChannel)
@@ -126,8 +135,8 @@ class NetcatWorker(
 
     private fun readAndUpdateView(socketChannel: ByteChannel) {
         val bytes = readBytes(socketChannel)
-        if (bytes.size > 0) {
-            updateUIHandler.post(UpdateTextView(String(bytes), tView))
+        if (bytes.isNotEmpty()) {
+            updateUIHandler.post(AppendToTextView(String(bytes), mainView))
         }
     }
 
@@ -142,18 +151,19 @@ class NetcatWorker(
         while (!sendQueue.isEmpty()) {
             val msg = "${sendQueue.pop()}${sessionArgs.lineEnd}"
             sendBytes(socketChannel, msg.toByteArray())
-            updateUIHandler.post(UpdateTextView(msg, tView))
+            updateUIHandler.post(AppendToTextView(msg, mainView))
         }
     }
 
-    private fun updateViewOnException(e: IOException) {
-        if (e.message != null) {
-            updateUIHandler.post(UpdateTextView("${e.message}\n", tView))
+    private fun startTwoWayChannel(channel: ByteChannel) {
+        while (true) {
+            sendFromUserInputQueue(channel)
+            readAndUpdateView(channel)
         }
     }
 
     private fun redirectProcessStreamsToSocket(command: String, socket: ByteChannel) {
-        val process = ProcessBuilder(command).redirectErrorStream(true).start();
+        val process = ProcessBuilder(command).redirectErrorStream(true).start()
         val processStdout = process.inputStream
         val processStdin = process.outputStream
         var exited = false
@@ -172,14 +182,8 @@ class NetcatWorker(
             try {
                 process.exitValue()
                 exited = true
-            } catch (_: IllegalThreadStateException) { }
-        }
-    }
-
-    private fun startTwoWayChannel(channel: ByteChannel) {
-        while (true) {
-            sendFromUserInputQueue(channel)
-            readAndUpdateView(channel)
+            } catch (_: IllegalThreadStateException) {
+            }
         }
     }
 
