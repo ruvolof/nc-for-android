@@ -2,6 +2,7 @@ package com.werebug.androidnetcat
 
 import android.os.Handler
 import android.os.Looper
+import android.provider.ContactsContract.Data
 import android.widget.TextView
 import java.io.*
 import java.net.InetSocketAddress
@@ -20,6 +21,7 @@ class NetcatWorker(
 
     private val sendQueue = LinkedList<String>()
     private val updateUIHandler: Handler = Handler(Looper.getMainLooper())
+    private var isStopped = false
 
     class AppendToTextView(private val message: String, private val view: TextView) : Runnable {
         override fun run() {
@@ -53,8 +55,9 @@ class NetcatWorker(
     }
 
     private fun openTCPConnection() {
+        var socketChannel: SocketChannel? = null
         try {
-            val socketChannel: SocketChannel = SocketChannel.open()
+            socketChannel = SocketChannel.open()
             socketChannel.connect(InetSocketAddress(sessionArgs.host, sessionArgs.port))
             socketChannel.finishConnect()
             updateMainView("${sessionArgs.host} ${sessionArgs.port} open\n")
@@ -66,15 +69,20 @@ class NetcatWorker(
             }
         } catch (e: IOException) {
             updateViewOnException(e)
+        } finally {
+            socketChannel?.close()
         }
     }
 
     private fun startTCPListener() {
+        var serverSocket: ServerSocketChannel? = null
+        var clientChannel: SocketChannel? = null
         try {
-            val serverSocket: ServerSocketChannel = ServerSocketChannel.open()
+
+            serverSocket = ServerSocketChannel.open()
             serverSocket.socket().bind(InetSocketAddress(sessionArgs.port))
             updateMainView("Listening on ${serverSocket.socket().localSocketAddress}\n")
-            val clientChannel: SocketChannel = serverSocket.accept()
+            clientChannel = serverSocket.accept()
             clientChannel.configureBlocking(false)
             updateMainView(
                 "Received connection from ${clientChannel.socket().remoteSocketAddress}\n"
@@ -86,23 +94,30 @@ class NetcatWorker(
             }
         } catch (e: IOException) {
             updateViewOnException(e)
+        } finally {
+            clientChannel?.close()
+            serverSocket?.close()
         }
     }
 
     private fun openUDPConnection() {
+        var datagramChannel: DatagramChannel? = null
         try {
-            val datagramChannel: DatagramChannel = DatagramChannel.open()
+            datagramChannel = DatagramChannel.open()
             datagramChannel.configureBlocking(false)
             datagramChannel.connect(InetSocketAddress(sessionArgs.host, sessionArgs.port))
             startTwoWayChannel(datagramChannel)
         } catch (e: IOException) {
             updateViewOnException(e)
+        } finally {
+            datagramChannel?.close()
         }
     }
 
     private fun startUDPListener() {
+        var datagramChannel: DatagramChannel? = null
         try {
-            val datagramChannel: DatagramChannel = DatagramChannel.open()
+            datagramChannel = DatagramChannel.open()
             datagramChannel.socket().bind(InetSocketAddress(sessionArgs.port))
             updateMainView("Listening on ${datagramChannel.socket().localSocketAddress}\n")
             val buffer: ByteBuffer = ByteBuffer.allocate(65535)
@@ -118,6 +133,8 @@ class NetcatWorker(
             startTwoWayChannel(datagramChannel)
         } catch (e: IOException) {
             updateViewOnException(e)
+        } finally {
+            datagramChannel?.close()
         }
     }
 
@@ -156,7 +173,7 @@ class NetcatWorker(
     }
 
     private fun startTwoWayChannel(channel: ByteChannel) {
-        while (true) {
+        while (!isStopped) {
             sendFromUserInputQueue(channel)
             readAndUpdateView(channel)
         }
@@ -167,7 +184,7 @@ class NetcatWorker(
         val processStdout = process.inputStream
         val processStdin = process.outputStream
         var exited = false
-        while (!exited) {
+        while (!exited && !isStopped) {
             val outputByteCount = processStdout.available()
             if (outputByteCount > 0) {
                 val bytes = ByteArray(outputByteCount)
@@ -185,9 +202,16 @@ class NetcatWorker(
             } catch (_: IllegalThreadStateException) {
             }
         }
+        if (!exited) {
+            process.destroy()
+        }
     }
 
     fun addToSendQueue(message: String) {
         sendQueue.add(message)
+    }
+
+    fun halt() {
+        isStopped = true
     }
 }
