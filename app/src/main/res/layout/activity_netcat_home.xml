@@ -58,7 +58,7 @@
         android:inputType="text"
         android:layout_weight="2"
         android:padding="10dp"
-        android:hint="@string/ed_type_your_message"
+        android:hint="@string/nc_input_hint"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/btn_start_netcat"
         app:layout_constraintStart_toStartOf="parent" />

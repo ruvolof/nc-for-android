@@ -2,7 +2,6 @@ package com.werebug.androidnetcat
 
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.werebug.androidnetcat.databinding.ActivityNetcatSessionBinding
@@ -43,7 +42,6 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
     }
 
     override fun onDestroy() {
-        Log.d("CUSTOM_NETCAT", "ON DESTROY CALLED")
         worker.halt()
         super.onDestroy()
     }

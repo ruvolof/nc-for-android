@@ -2,7 +2,6 @@ package com.werebug.androidnetcat
 
 import android.os.Handler
 import android.os.Looper
-import android.provider.ContactsContract.Data
 import android.widget.TextView
 import java.io.*
 import java.net.InetSocketAddress
