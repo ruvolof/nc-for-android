@@ -77,7 +77,6 @@ class NetcatWorker(
         var serverSocket: ServerSocketChannel? = null
         var clientChannel: SocketChannel? = null
         try {
-
             serverSocket = ServerSocketChannel.open()
             serverSocket.socket().bind(InetSocketAddress(sessionArgs.port))
             updateMainView("Listening on ${serverSocket.socket().localSocketAddress}\n")
