@@ -32,7 +32,8 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
         val listen: Boolean,
         val proto: Proto,
         val lineEnd: String = "\n",
-        val exec: String?) : Serializable {
+        val exec: String?
+    ) : Serializable {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -104,8 +105,7 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
                     if (expectPort) {
                         showErrorToast(R.string.error_expected_port)
                         return null
-                    }
-                    else if (expectCommand) {
+                    } else if (expectCommand) {
                         showErrorToast(R.string.error_expected_command)
                         return null
                     }

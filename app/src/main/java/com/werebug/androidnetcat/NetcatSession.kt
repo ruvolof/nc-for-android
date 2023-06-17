@@ -1,13 +1,9 @@
 package com.werebug.androidnetcat
 
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
-import android.content.ServiceConnection
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Build
 import android.os.Bundle
-import android.os.IBinder
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import com.werebug.androidnetcat.databinding.ActivityNetcatSessionBinding
 
 class NetcatSession : AppCompatActivity(), View.OnClickListener {
@@ -18,14 +14,26 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
     private lateinit var netcatSessionArgs: AndroidNetcatHome.SessionArgs
     private lateinit var worker: NetcatWorker
 
+    @Suppress("DEPRECATION")
+    private fun getNetcatSessionArgs(): AndroidNetcatHome.SessionArgs {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getSerializableExtra(
+                AndroidNetcatHome.netcat_cmd_extra,
+                AndroidNetcatHome.SessionArgs::class.java
+            )!!
+        } else {
+            intent.getSerializableExtra(
+                AndroidNetcatHome.netcat_cmd_extra
+            ) as AndroidNetcatHome.SessionArgs
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityNetcatSessionBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        netcatSessionArgs =
-            intent.getSerializableExtra(AndroidNetcatHome.netcat_cmd_extra)
-                    as AndroidNetcatHome.SessionArgs
+        netcatSessionArgs = getNetcatSessionArgs();
         title = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string).toString()
         binding.btnSendText.setOnClickListener(this);
 
