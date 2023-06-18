@@ -20,6 +20,7 @@ class NetcatWorker(
 
     private val sendQueue = LinkedList<String>()
     private val updateUIHandler: Handler = Handler(Looper.getMainLooper())
+    private val buffer: ByteBuffer = ByteBuffer.allocate(65535)
     private var isStopped = false
 
     class AppendToTextView(private val message: String, private val view: TextView) : Runnable {
@@ -118,7 +119,7 @@ class NetcatWorker(
             datagramChannel = DatagramChannel.open()
             datagramChannel.socket().bind(InetSocketAddress(sessionArgs.port))
             updateMainView("Listening on ${datagramChannel.socket().localSocketAddress}\n")
-            val buffer: ByteBuffer = ByteBuffer.allocate(65535)
+            buffer.clear()
             val clientAddress: SocketAddress = datagramChannel.receive(buffer)
             updateMainView("Received datagram from $clientAddress\n")
             updateMainView(
@@ -137,7 +138,7 @@ class NetcatWorker(
     }
 
     private fun readBytes(socketChannel: ByteChannel): ByteArray {
-        val buffer = ByteBuffer.allocate(65535)
+        buffer.clear()
         val readCount = socketChannel.read(buffer)
         if (readCount == -1) {
             throw IOException("Connection closed by the remote host.")
