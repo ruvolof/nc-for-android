@@ -1,0 +1,13 @@
+--- nmap-7.94/ncat/sockaddr_u.h	2023-04-14 19:11:46.000000000 +0200
++++ sockaddr_u.txt	2023-08-18 22:57:53.914207603 +0200
+@@ -63,6 +63,10 @@
+ #ifndef SOCKADDR_U_H_
+ #define SOCKADDR_U_H_
+ 
++#ifndef SUN_LEN
++#define SUN_LEN(ptr) ((size_t) (((struct sockaddr_un *) 0)->sun_path) + strlen((ptr)->sun_path))
++#endif
++
+ #ifdef WIN32
+ # include <ws2def.h>
+ #endif

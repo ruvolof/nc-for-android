@@ -3,14 +3,24 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
+    compileSdk 33
+
     defaultConfig {
         applicationId "com.werebug.androidnetcat"
-        compileSdk 33
         minSdkVersion 19
         targetSdkVersion 33
         versionCode 7
         versionName "1.1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                cppFlags ''
+            }
+        }
+        ndk {
+            //noinspection ChromeOsAbiSupport
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
     }
     buildTypes {
         release {
@@ -24,6 +34,17 @@ android {
     compileOptions.with {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging true
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.22.1'
+        }
     }
     namespace 'com.werebug.androidnetcat'
 }
