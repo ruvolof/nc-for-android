@@ -5,12 +5,11 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.werebug.androidnetcat.databinding.ActivityNetcatHomeBinding
-import java.util.*
 
 class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
 
     companion object {
-        val netcat_cmd_string: String = "NETCAT_CMD"
+        const val netcat_cmd_string: String = "NETCAT_CMD"
     }
 
     private lateinit var binding: ActivityNetcatHomeBinding

@@ -2,13 +2,14 @@ package com.werebug.androidnetcat
 
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import android.widget.TextView
-import java.io.*
+import com.werebug.androidnetcat.databinding.ActivityNetcatSessionBinding
 import java.util.*
 
 class NetcatWorker(
     private val ncArgv: List<String>,
-    private val connectionOutputView: TextView
+    private val sessionActivityBinding: ActivityNetcatSessionBinding
 ) : Thread() {
 
     private val sendQueue = LinkedList<String>()
@@ -22,14 +23,27 @@ class NetcatWorker(
         }
     }
 
-    private fun updateMainView(message: String) {
-        updateUIHandler.post(AppendToTextView(message, connectionOutputView))
+    class DisableViews(private val views: List<View>) : Runnable {
+        override fun run() {
+            views.forEach {
+                it.visibility = View.GONE
+            }
+        }
     }
 
-    private fun updateViewOnException(e: IOException) {
-        if (e.message != null) {
-            updateMainView("${e.message}\n")
-        }
+    private fun updateMainView(message: String) {
+        updateUIHandler.post(AppendToTextView(message, sessionActivityBinding.tvConnection))
+    }
+
+    private fun disableMessageViews() {
+        updateUIHandler.post(
+            DisableViews(
+                listOf(
+                    sessionActivityBinding.etNcSendText,
+                    sessionActivityBinding.btnSendText
+                )
+            )
+        )
     }
 
     override fun run() {
@@ -58,6 +72,7 @@ class NetcatWorker(
                 val exitValue = process.exitValue()
                 exited = true
                 updateMainView("\n\nNcat command finished. Exit value: $exitValue.")
+                disableMessageViews()
             } catch (_: IllegalThreadStateException) {
             }
         }

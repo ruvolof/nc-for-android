@@ -1,8 +1,6 @@
 package com.werebug.androidnetcat
 
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -28,7 +26,7 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         }
         ncCmdArgv.removeAt(0)
         ncCmdArgv.add(0, ncatPath)
-        worker = NetcatWorker(ncCmdArgv, binding.tvConnection)
+        worker = NetcatWorker(ncCmdArgv, binding)
         worker.start()
 
         binding.btnSendText.setOnClickListener(this);
