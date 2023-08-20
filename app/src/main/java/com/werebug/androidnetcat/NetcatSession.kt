@@ -2,43 +2,36 @@ package com.werebug.androidnetcat
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.werebug.androidnetcat.databinding.ActivityNetcatSessionBinding
 
 class NetcatSession : AppCompatActivity(), View.OnClickListener {
 
-    private val LogTag: String = "NetcatSessionActivity"
-
     private lateinit var binding: ActivityNetcatSessionBinding;
-    private lateinit var netcatSessionArgs: AndroidNetcatHome.SessionArgs
     private lateinit var worker: NetcatWorker
-
-    @Suppress("DEPRECATION")
-    private fun getNetcatSessionArgs(): AndroidNetcatHome.SessionArgs {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getSerializableExtra(
-                AndroidNetcatHome.netcat_cmd_extra,
-                AndroidNetcatHome.SessionArgs::class.java
-            )!!
-        } else {
-            intent.getSerializableExtra(
-                AndroidNetcatHome.netcat_cmd_extra
-            ) as AndroidNetcatHome.SessionArgs
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityNetcatSessionBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        netcatSessionArgs = getNetcatSessionArgs();
-        title = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string).toString()
-        binding.btnSendText.setOnClickListener(this);
-
-        worker = NetcatWorker(netcatSessionArgs, binding.tvConnection)
+        val ncCmd = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string).toString()
+        title = ncCmd
+        val ncCmdArgv = ncCmd.split(" ").toMutableList()
+        val ncatPath = applicationInfo.nativeLibraryDir + "/libncat.so"
+        if (ncCmdArgv[0] != "nc" && ncCmdArgv[0] != "ncat") {
+            showErrorToast(R.string.error_missing_nc)
+            finish()
+        }
+        ncCmdArgv.removeAt(0)
+        ncCmdArgv.add(0, ncatPath)
+        worker = NetcatWorker(ncCmdArgv, binding.tvConnection)
         worker.start()
+
+        binding.btnSendText.setOnClickListener(this);
     }
 
     override fun onDestroy() {
@@ -54,5 +47,9 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
                 worker.addToSendQueue(text)
             }
         }
+    }
+
+    private fun showErrorToast(text: Int) {
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
     }
 }
