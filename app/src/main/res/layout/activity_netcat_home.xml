@@ -30,7 +30,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/main_options"
+                android:text="@string/main_disclaimer"
                 android:padding="10dp"
                 android:fontFamily="monospace" />
 
