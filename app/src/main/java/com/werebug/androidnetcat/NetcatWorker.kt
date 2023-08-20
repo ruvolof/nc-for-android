@@ -5,45 +5,24 @@ import android.os.Looper
 import android.view.View
 import android.widget.TextView
 import com.werebug.androidnetcat.databinding.ActivityNetcatSessionBinding
+import java.lang.ref.WeakReference
 import java.util.*
 
 class NetcatWorker(
     private val ncArgv: List<String>,
-    private val sessionActivityBinding: ActivityNetcatSessionBinding
+    private val sessionActivityRef: WeakReference<NetcatSession>
 ) : Thread() {
 
     private val sendQueue = LinkedList<String>()
     private val updateUIHandler: Handler = Handler(Looper.getMainLooper())
     private var isStopped = false
 
-    class AppendToTextView(private val message: String, private val view: TextView) : Runnable {
-        override fun run() {
-            val newText = "${view.text}${message}"
-            view.text = newText
-        }
-    }
-
-    class DisableViews(private val views: List<View>) : Runnable {
-        override fun run() {
-            views.forEach {
-                it.visibility = View.GONE
-            }
-        }
-    }
-
     private fun updateMainView(message: String) {
-        updateUIHandler.post(AppendToTextView(message, sessionActivityBinding.tvConnection))
+        updateUIHandler.post { sessionActivityRef.get()?.appendToOutputView(message) }
     }
 
     private fun disableMessageViews() {
-        updateUIHandler.post(
-            DisableViews(
-                listOf(
-                    sessionActivityBinding.etNcSendText,
-                    sessionActivityBinding.btnSendText
-                )
-            )
-        )
+        updateUIHandler.post { sessionActivityRef.get()?.disableMessageViews() }
     }
 
     override fun run() {

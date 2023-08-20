@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.werebug.androidnetcat.databinding.ActivityNetcatSessionBinding
+import java.lang.ref.WeakReference
 
 class NetcatSession : AppCompatActivity(), View.OnClickListener {
 
@@ -26,7 +27,7 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         }
         ncCmdArgv.removeAt(0)
         ncCmdArgv.add(0, ncatPath)
-        worker = NetcatWorker(ncCmdArgv, binding)
+        worker = NetcatWorker(ncCmdArgv, WeakReference(this))
         worker.start()
 
         binding.btnSendText.setOnClickListener(this);
@@ -49,5 +50,15 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
 
     private fun showErrorToast(text: Int) {
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+    }
+
+    fun appendToOutputView(message: String) {
+        val newText = "${binding.tvConnection.text}${message}"
+        binding.tvConnection.text = newText
+    }
+
+    fun disableMessageViews() {
+        binding.etNcSendText.visibility = View.GONE
+        binding.btnSendText.visibility = View.GONE
     }
 }
