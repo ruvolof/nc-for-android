@@ -27,7 +27,8 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         }
         ncCmdArgv.removeAt(0)
         ncCmdArgv.add(0, ncatPath)
-        worker = NetcatWorker(ncCmdArgv, WeakReference(this))
+        val bashWrappedArgv = listOf("/system/bin/sh", "-c", ncCmdArgv.joinToString(" "))
+        worker = NetcatWorker(bashWrappedArgv, WeakReference(this))
         worker.start()
 
         binding.btnSendText.setOnClickListener(this);
