@@ -5,8 +5,6 @@ cmake_minimum_required(VERSION 3.18.1)
 
 project("androidnetcat")
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/nmap-7.94/)
-
 # This is a workaround to force Android Studio to package my executable.
 # https://stackoverflow.com/questions/75032198/how-to-properly-bundle-an-already-compiled-executable-in-android-app-using-cmake
 
