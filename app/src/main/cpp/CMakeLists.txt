@@ -26,4 +26,5 @@ add_executable(
 
 target_link_libraries(
         do_nothing.so
-        ncat)
+        ncat
+        -Wl,--allow-shlib-undefined)
