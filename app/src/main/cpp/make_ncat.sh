@@ -71,9 +71,10 @@ function main() {
   for target in "${!ANDROID_TARGETS_ABI[@]}"; do
     prepare_source
     patch_source
-    cd "${NMAP_BUILD_DIR}"
+    (
+    cd "${NMAP_BUILD_DIR}" || exit
     cross_compile_ncat "${target}"
-    cd ..
+    )
   done
 }
 
