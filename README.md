@@ -3,7 +3,7 @@ This is a wrapper around the `ncat` binary cross-compiled for Android.
 
 ## History
 Version 1 of the application was a custom implementation in Kotlin of commands to open UDP and TCP
-sockets. However, after developing (Nmap for Android)[https://github.com/ruvolof/anmap-wrapper], it
+sockets. However, after developing [Nmap for Android](https://github.com/ruvolof/anmap-wrapper), it
 became clear that the same approach would work better.
 
 ## How to cross-compile Ncat
