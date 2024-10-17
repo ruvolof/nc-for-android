@@ -18,9 +18,9 @@ readonly ANDROID_NDK_ROOT="$(ls -dr /home/${USER}/Android/Sdk/ndk/* | head -1)"
 readonly HOST_ARCH='linux-x86_64'
 
 declare -A ANDROID_TARGETS_ABI=(['aarch64-linux-android']='arm64-v8a' \
-                                ['armv7a-linux-androideabi']='armeabi-v7a')
-                                #['i686-linux-android']='x86' \
-                                #['x86_64-linux-android']='x86_64')
+                                ['armv7a-linux-androideabi']='armeabi-v7a' \
+                                ['i686-linux-android']='x86' \
+                                ['x86_64-linux-android']='x86_64')
 
 # Exports variables needed to cross-compile for Android.
 # Args:
