@@ -32,7 +32,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/main_disclaimer"
                 android:padding="10dp"
-                android:fontFamily="monospace" />
+                android:fontFamily="monospace"
+                android:autoLink="web" />
 
             <TextView
                 android:layout_width="wrap_content"

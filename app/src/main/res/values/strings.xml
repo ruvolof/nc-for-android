@@ -1,11 +1,11 @@
 <resources>
     <string name="app_name">Netcat for Android</string>
-    <string name="nc_input_hint">ncat 127.0.0.1 9999</string>
+    <string name="nc_input_hint">Ex: ncat --help</string>
     <string name="ed_type_your_message">Message</string>
     <string name="error_missing_nc">Start your command with nc or ncat. See examples.</string>
 
     <string name="main_credits">ncat for Android\nCreated by Werebug (https://werebug.com)</string>
-    <string name="main_disclaimer">This application is a wrapper around the ncat binary cross-compiled for Android from the Nmap source.\nThis is not an official Nmap application.</string>
+    <string name="main_disclaimer">This application is a wrapper around the ncat binary cross-compiled for Android from the Nmap source (https://nmap.org). This is not an official Nmap application. </string>
     <string name="main_examples">EXAMPLES:\nncat 192.168.1.100 9999\nncat -lp 9999\nncat -u 192.168.1.100 9999\nncat -ulp 9999\nncat -lp 9999 -e /system/bin/sh\n\nType \'ncat --help\' for the full list.\nPlease report an issue if you find any bug while trying different flags.</string>
     <string name="main_source">Source code: https://github.com/ruvolof/nc-for-android. Use Github to submit bugs or feature requests.</string>
 </resources>
