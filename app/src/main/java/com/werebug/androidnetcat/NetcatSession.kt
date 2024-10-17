@@ -1,6 +1,7 @@
 package com.werebug.androidnetcat
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -16,6 +17,7 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         binding = ActivityNetcatSessionBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val ncCmd = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string).toString()
         title = ncCmd
@@ -32,6 +34,17 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         worker.start()
 
         binding.btnSendText.setOnClickListener(this);
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                onBackPressedDispatcher.onBackPressed()
+                true
+            }
+
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     override fun onDestroy() {
