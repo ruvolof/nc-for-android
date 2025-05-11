@@ -5,13 +5,12 @@ set -u
 readonly SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null \
                       && pwd )
 
-readonly NMAP_VERSION='7.95'
+readonly NMAP_VERSION='7.96'
 readonly NMAP_SRC="nmap-${NMAP_VERSION}.tgz"
 readonly NMAP_DOWNLOAD_URL="https://nmap.org/dist/${NMAP_SRC}"
 readonly NMAP_BUILD_DIR="nmap-${NMAP_VERSION}"
-readonly OPENSSL_VERSION='3.0.15'
+readonly OPENSSL_VERSION='3.0.16'
 readonly OPENSSL_SRC="openssl-${OPENSSL_VERSION}.tar.gz"
-https://github.com/openssl/openssl/releases/download/openssl-3.0.15/openssl-3.0.15.tar.gz
 readonly OPENSSL_DOWNLOAD_URL="https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/${OPENSSL_SRC}"
 readonly OPENSSL_BUILD_DIR="${SCRIPT_DIR}/openssl-${OPENSSL_VERSION}"
 readonly ANDROID_NDK_ROOT="$(ls -dr /home/${USER}/Android/Sdk/ndk/* | head -1)"
@@ -84,7 +83,7 @@ function cross_compile_openssl() {
   elif [[ "${target}" == 'x86_64-linux-android' ]]; then
       ./Configure android-x86_64
   fi
-  make
+  make -j
 }
 
 # This function creates the folder OPENSSL_BUILD_DIR/lib, then copies
