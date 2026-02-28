@@ -35,17 +35,20 @@ class NetcatWorker(
         val processStdin = process.outputStream
         var exited = false
         while (!exited && !isStopped) {
+            var dataProcessed = false
             while (!sendQueue.isEmpty()) {
                 val msg = "${sendQueue.pop()}\n"
                 processStdin.write(msg.toByteArray())
                 processStdin.flush()
                 updateMainView(msg)
+                dataProcessed = true
             }
             val outputByteCount = processStdout.available()
             if (outputByteCount > 0) {
                 val bytes = ByteArray(outputByteCount)
                 processStdout.read(bytes)
                 updateMainView(String(bytes))
+                dataProcessed = true
             }
             try {
                 val exitValue = process.exitValue()
@@ -53,6 +56,13 @@ class NetcatWorker(
                 updateMainView("\n\nNcat command finished. Exit value: $exitValue.")
                 disableMessageViews()
             } catch (_: IllegalThreadStateException) {
+                if (!dataProcessed) {
+                    try {
+                        Thread.sleep(50)
+                    } catch (e: InterruptedException) {
+                        isStopped = true
+                    }
+                }
             }
         }
         if (!exited) {

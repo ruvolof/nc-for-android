@@ -9,6 +9,7 @@
     android:fitsSystemWindows="true">
 
     <ScrollView
+        android:id="@+id/sv_connection"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@+id/et_nc_send_text"

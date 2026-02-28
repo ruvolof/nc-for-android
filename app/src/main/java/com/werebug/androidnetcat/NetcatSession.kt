@@ -19,21 +19,36 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         setContentView(binding.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val ncCmd = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string).toString()
+        val ncCmd = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string).toString().trim()
         title = ncCmd
-        val ncCmdArgv = ncCmd.split(" ").toMutableList()
         val ncatPath = applicationInfo.nativeLibraryDir + "/libncat.so"
-        if (ncCmdArgv[0] != "nc" && ncCmdArgv[0] != "ncat") {
+        
+        if (!ncCmd.startsWith("nc ") && !ncCmd.startsWith("ncat ") && ncCmd != "nc" && ncCmd != "ncat") {
             showErrorToast(R.string.error_missing_nc)
             finish()
+            return
         }
-        ncCmdArgv.removeAt(0)
-        ncCmdArgv.add(0, ncatPath)
-        val shellWrappedArgv = listOf("/system/bin/sh", "-c", ncCmdArgv.joinToString(" "))
+        
+        val ncatCommand = if (ncCmd.startsWith("nc ")) {
+            ncCmd.replaceFirst("nc ", "$ncatPath ")
+        } else if (ncCmd.startsWith("ncat ")) {
+            ncCmd.replaceFirst("ncat ", "$ncatPath ")
+        } else if (ncCmd == "nc" || ncCmd == "ncat") {
+            ncatPath
+        } else {
+            ncatPath // Fallback
+        }
+
+        val shellWrappedArgv = listOf("/system/bin/sh", "-c", ncatCommand)
         worker = NetcatWorker(shellWrappedArgv, WeakReference(this))
         worker.start()
 
         binding.btnSendText.setOnClickListener(this);
+    }
+
+    override fun onCreateOptionsMenu(menu: android.view.Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_session, menu)
+        return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -42,7 +57,10 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
                 onBackPressedDispatcher.onBackPressed()
                 true
             }
-
+            R.id.action_clear -> {
+                binding.tvConnection.text = ""
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -69,6 +87,9 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
     fun appendToOutputView(message: String) {
         val newText = "${binding.tvConnection.text}${message}"
         binding.tvConnection.text = newText
+        binding.svConnection.post {
+            binding.svConnection.fullScroll(View.FOCUS_DOWN)
+        }
     }
 
     fun disableMessageViews() {
