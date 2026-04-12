@@ -10,7 +10,7 @@ import java.lang.ref.WeakReference
 
 class NetcatSession : AppCompatActivity(), View.OnClickListener {
 
-    private lateinit var binding: ActivityNetcatSessionBinding;
+    private lateinit var binding: ActivityNetcatSessionBinding
     private lateinit var worker: NetcatWorker
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,7 +33,7 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         worker = NetcatWorker(shellWrappedArgv, WeakReference(this))
         worker.start()
 
-        binding.btnSendText.setOnClickListener(this);
+        binding.btnSendText.setOnClickListener(this)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -55,7 +55,7 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
     override fun onClick(v: View?) {
         when (v?.id) {
             R.id.btn_send_text -> {
-                val text: String = binding.etNcSendText.text.toString();
+                val text: String = binding.etNcSendText.text.toString()
                 binding.etNcSendText.text.clear()
                 worker.addToSendQueue(text)
             }
