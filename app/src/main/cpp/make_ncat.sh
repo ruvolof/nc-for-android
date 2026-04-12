@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 
 set -u
+set -e
 
 readonly SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null \
                       && pwd )
 
-readonly NMAP_VERSION='7.98'
+readonly NMAP_VERSION='7.99'
 readonly NMAP_SRC="nmap-${NMAP_VERSION}.tgz"
 readonly NMAP_DOWNLOAD_URL="https://nmap.org/dist/${NMAP_SRC}"
 readonly NMAP_BUILD_DIR="nmap-${NMAP_VERSION}"
-readonly OPENSSL_VERSION='3.0.17'
+readonly OPENSSL_VERSION='3.5.6'
 readonly OPENSSL_SRC="openssl-${OPENSSL_VERSION}.tar.gz"
 readonly OPENSSL_DOWNLOAD_URL="https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/${OPENSSL_SRC}"
 readonly OPENSSL_BUILD_DIR="${SCRIPT_DIR}/openssl-${OPENSSL_VERSION}"
@@ -27,7 +28,7 @@ declare -A ANDROID_TARGETS_ABI=(['aarch64-linux-android']='arm64-v8a' \
 function export_make_toolchain() {
   export TARGET="$1"
   export TOOLCHAIN="${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/${HOST_ARCH}"
-  export API=33
+  export API=35
   export AR="${TOOLCHAIN}/bin/llvm-ar"
   export CC="${TOOLCHAIN}/bin/${TARGET}${API}-clang"
   export AS="${CC}"
@@ -66,7 +67,10 @@ function prepare_openssl_source() {
 # Function to patch sockaddr_u.h.
 # The patch file takes care of missing SUN_LEN macro.
 function patch_source() {
-  patch "${NMAP_BUILD_DIR}/ncat/sockaddr_u.h" < sockaddr_u.h.patch
+  patch "${NMAP_BUILD_DIR}/ncat/sockaddr_u.h" < patches/sockaddr_u.h.patch
+  patch "${NMAP_BUILD_DIR}/libdnet-stripped/configure.ac" < patches/libdnet-configure.ac.patch
+  patch "${NMAP_BUILD_DIR}/libdnet-stripped/acconfig.h" < patches/libdnet-acconfig.h.patch
+  (cd "${NMAP_BUILD_DIR}/libdnet-stripped" && autoreconf -f)
 }
 
 # Cross-compiles openssl for a specified android target.
@@ -83,7 +87,7 @@ function cross_compile_openssl() {
   elif [[ "${target}" == 'x86_64-linux-android' ]]; then
       ./Configure android-x86_64
   fi
-  make -j
+  make -j CCOPT="-Wl,-z,max-page-size=16384"
 }
 
 # This function creates the folder OPENSSL_BUILD_DIR/lib, then copies
