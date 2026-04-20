@@ -2,9 +2,6 @@ package com.werebug.androidnetcat
 
 import android.os.Handler
 import android.os.Looper
-import android.view.View
-import android.widget.TextView
-import com.werebug.androidnetcat.databinding.ActivityNetcatSessionBinding
 import java.lang.ref.WeakReference
 import java.util.*
 
@@ -35,17 +32,20 @@ class NetcatWorker(
         val processStdin = process.outputStream
         var exited = false
         while (!exited && !isStopped) {
+            var dataProcessed = false
             while (!sendQueue.isEmpty()) {
                 val msg = "${sendQueue.pop()}\n"
                 processStdin.write(msg.toByteArray())
                 processStdin.flush()
                 updateMainView(msg)
+                dataProcessed = true
             }
             val outputByteCount = processStdout.available()
             if (outputByteCount > 0) {
                 val bytes = ByteArray(outputByteCount)
                 processStdout.read(bytes)
                 updateMainView(String(bytes))
+                dataProcessed = true
             }
             try {
                 val exitValue = process.exitValue()
@@ -53,6 +53,9 @@ class NetcatWorker(
                 updateMainView("\n\nNcat command finished. Exit value: $exitValue.")
                 disableMessageViews()
             } catch (_: IllegalThreadStateException) {
+                if (!dataProcessed) {
+                    sleep(100)
+                }
             }
         }
         if (!exited) {
