@@ -19,7 +19,7 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         setContentView(binding.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val ncCmd = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string).toString()
+        val ncCmd = intent.getStringExtra(AndroidNetcatHome.netcat_cmd_string).toString().trim()
         title = ncCmd
         val ncCmdArgv = ncCmd.split(" ").toMutableList()
         val ncatPath = applicationInfo.nativeLibraryDir + "/libncat.so"
