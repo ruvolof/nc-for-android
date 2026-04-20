@@ -7,8 +7,8 @@ android {
         applicationId "com.werebug.androidnetcat"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 15
-        versionName "2.1.4"
+        versionCode 16
+        versionName "2.1.5"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
