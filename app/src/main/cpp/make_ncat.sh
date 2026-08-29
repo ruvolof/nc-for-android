@@ -6,7 +6,7 @@ set -e
 readonly SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null \
                       && pwd )
 
-readonly NMAP_VERSION='7.99'
+readonly NMAP_VERSION='7.991'
 readonly NMAP_SRC="nmap-${NMAP_VERSION}.tgz"
 readonly NMAP_DOWNLOAD_URL="https://nmap.org/dist/${NMAP_SRC}"
 readonly NMAP_BUILD_DIR="nmap-${NMAP_VERSION}"
@@ -39,9 +39,11 @@ function export_make_toolchain() {
 }
 
 # Initializes the folder structure for libraries.
+# Args:
+#   $@ Targets (from ANDROID_TARGETS_ABI)
 function create_lib_folders() {
-  rm -rf libs
-  for target in "${!ANDROID_TARGETS_ABI[@]}"; do
+  for target in "$@"; do
+    rm -rf "libs/${ANDROID_TARGETS_ABI[$target]}"
     mkdir -p "libs/${ANDROID_TARGETS_ABI[$target]}"
   done
 }
@@ -68,9 +70,6 @@ function prepare_openssl_source() {
 # The patch file takes care of missing SUN_LEN macro.
 function patch_source() {
   patch "${NMAP_BUILD_DIR}/ncat/sockaddr_u.h" < patches/sockaddr_u.h.patch
-  patch "${NMAP_BUILD_DIR}/libdnet-stripped/configure.ac" < patches/libdnet-configure.ac.patch
-  patch "${NMAP_BUILD_DIR}/libdnet-stripped/acconfig.h" < patches/libdnet-acconfig.h.patch
-  (cd "${NMAP_BUILD_DIR}/libdnet-stripped" && autoreconf -f)
 }
 
 # Cross-compiles openssl for a specified android target.
@@ -117,9 +116,43 @@ function cross_compile_ncat() {
   cp ncat/ncat "../libs/${ANDROID_TARGETS_ABI[$TARGET]}/libncat.so"
 }
 
+# Maps the ABI names given on the command line to their toolchain targets.
+# With no arguments, every supported ABI is selected.
+# Args:
+#   $@ Android ABI names (e.g. arm64-v8a)
+function resolve_targets() {
+  if [[ "$#" -eq 0 ]]; then
+    printf '%s\n' "${!ANDROID_TARGETS_ABI[@]}"
+    return
+  fi
+  local abi target found
+  for abi in "$@"; do
+    found=''
+    for target in "${!ANDROID_TARGETS_ABI[@]}"; do
+      if [[ "${ANDROID_TARGETS_ABI[$target]}" == "${abi}" ]]; then
+        printf '%s\n' "${target}"
+        found='yes'
+        break
+      fi
+    done
+    if [[ -z "${found}" ]]; then
+      echo "Unknown ABI '${abi}'." >&2
+      echo "Supported ABIs: ${ANDROID_TARGETS_ABI[*]}" >&2
+      exit 1
+    fi
+  done
+}
+
+# Args:
+#   $@ Android ABIs to build. Builds all of them when empty.
 function main() {
-  create_lib_folders
-  for target in "${!ANDROID_TARGETS_ABI[@]}"; do
+  cd "${SCRIPT_DIR}"
+
+  local targets resolved
+  resolved="$(resolve_targets "$@")" || exit 1
+  mapfile -t targets <<< "${resolved}"
+  create_lib_folders "${targets[@]}"
+  for target in "${targets[@]}"; do
     export ANDROID_NDK_ROOT
     (
       prepare_openssl_source
