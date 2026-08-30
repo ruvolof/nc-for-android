@@ -4,14 +4,18 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.werebug.androidnetcat.databinding.ActivityNetcatSessionBinding
-import java.lang.ref.WeakReference
+import kotlinx.coroutines.launch
 
 class NetcatSession : AppCompatActivity(), View.OnClickListener {
 
     private lateinit var binding: ActivityNetcatSessionBinding
-    private lateinit var worker: NetcatWorker
+    private val viewModel: NetcatSessionViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,11 +33,21 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         }
         ncCmdArgv.removeAt(0)
         ncCmdArgv.add(0, ncatPath)
-        val shellWrappedArgv = listOf("/system/bin/sh", "-c", ncCmdArgv.joinToString(" "))
-        worker = NetcatWorker(shellWrappedArgv, WeakReference(this))
-        worker.start()
+        // `exec` makes the shell replace itself with ncat, so the process we hold is ncat
+        // itself and destroying it on teardown actually stops the listener. It does not help
+        // when the command contains a pipe, `;`, `&&` or a redirection: the shell forks for
+        // those and the ncat child still outlives the session.
+        val shellWrappedArgv =
+            listOf("/system/bin/sh", "-c", "exec ${ncCmdArgv.joinToString(" ")}")
+        viewModel.startIfNotRunning(shellWrappedArgv)
 
         binding.btnSendText.setOnClickListener(this)
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.sessionState.collect { render(it) }
+            }
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -47,17 +61,12 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    override fun onDestroy() {
-        worker.halt()
-        super.onDestroy()
-    }
-
     override fun onClick(v: View?) {
         when (v?.id) {
             R.id.btn_send_text -> {
                 val text: String = binding.etNcSendText.text.toString()
                 binding.etNcSendText.text.clear()
-                worker.addToSendQueue(text)
+                viewModel.send(text)
             }
         }
     }
@@ -66,13 +75,10 @@ class NetcatSession : AppCompatActivity(), View.OnClickListener {
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
     }
 
-    fun appendToOutputView(message: String) {
-        val newText = "${binding.tvConnection.text}${message}"
-        binding.tvConnection.text = newText
-    }
-
-    fun disableMessageViews() {
-        binding.etNcSendText.visibility = View.GONE
-        binding.btnSendText.visibility = View.GONE
+    private fun render(sessionState: NetcatSessionViewModel.SessionState) {
+        binding.tvConnection.text = sessionState.output
+        val messageViewsVisibility = if (sessionState.running) View.VISIBLE else View.GONE
+        binding.etNcSendText.visibility = messageViewsVisibility
+        binding.btnSendText.visibility = messageViewsVisibility
     }
 }
