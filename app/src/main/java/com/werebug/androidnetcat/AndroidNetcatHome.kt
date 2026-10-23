@@ -2,6 +2,7 @@ package com.werebug.androidnetcat
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.werebug.androidnetcat.databinding.ActivityNetcatHomeBinding
@@ -18,6 +19,9 @@ class AndroidNetcatHome : AppCompatActivity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         binding = ActivityNetcatHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Wrap long commands over multiple lines, but keep Enter from inserting newlines
+        binding.etNcCommandLine.setRawInputType(InputType.TYPE_CLASS_TEXT)
 
         binding.btnStartNetcat.setOnClickListener(this)
     }
