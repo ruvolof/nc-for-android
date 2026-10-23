@@ -6,11 +6,11 @@ set -e
 readonly SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null \
                       && pwd )
 
-readonly NMAP_VERSION='7.991'
+readonly NMAP_VERSION='7.992'
 readonly NMAP_SRC="nmap-${NMAP_VERSION}.tgz"
 readonly NMAP_DOWNLOAD_URL="https://nmap.org/dist/${NMAP_SRC}"
 readonly NMAP_BUILD_DIR="nmap-${NMAP_VERSION}"
-readonly OPENSSL_VERSION='3.5.6'
+readonly OPENSSL_VERSION='3.5.9'
 readonly OPENSSL_SRC="openssl-${OPENSSL_VERSION}.tar.gz"
 readonly OPENSSL_DOWNLOAD_URL="https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/${OPENSSL_SRC}"
 readonly OPENSSL_BUILD_DIR="${SCRIPT_DIR}/openssl-${OPENSSL_VERSION}"
